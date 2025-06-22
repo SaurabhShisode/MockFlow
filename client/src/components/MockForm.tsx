@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 const MockForm = () => {
   const [path, setPath] = useState('/mock/user');
@@ -52,7 +51,6 @@ const MockForm = () => {
 
   return (
     <div className="w-full max-w-4xl">
-      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} />
       <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20">
         <div className="p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">

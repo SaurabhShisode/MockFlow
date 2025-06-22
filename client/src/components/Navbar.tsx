@@ -2,7 +2,7 @@
 
 const Navbar = () => {
   return (
-    <nav className="fixed top-5 left-0 right-0 z-10">
+    <nav className="pt-10 top-5 left-0 right-0 z-10">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center  rounded-xl ">
       
         <div className="flex items-center">
@@ -14,7 +14,7 @@ const Navbar = () => {
 
       
         <a
-          href="https://github.com"
+          href="https://github.com/SaurabhShisode"
           target="_blank"
           rel="noopener noreferrer"
           className="text-gray-300 hover:text-white flex items-center gap-2"
