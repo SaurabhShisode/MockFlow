@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 
 const MockForm = () => {
   const [path, setPath] = useState('/mock/user');
