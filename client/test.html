@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mock API Test</title>
+</head>
+<body>
+  <h2>Mock API Response:</h2>
+  <pre id="result">Loading...</pre>
+
+  <script>
+    fetch('http://localhost:3001/mock/user')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+      })
+      .catch(error => {
+        document.getElementById('result').textContent = 'Error: ' + error.message;
+      });
+  </script>
+</body>
+</html>
