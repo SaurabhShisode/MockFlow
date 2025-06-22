@@ -8,7 +8,7 @@
   <pre id="result">Loading...</pre>
 
   <script>
-    fetch('http://localhost:3001/mock/user')
+    fetch('https://mockflow-backend.onrender.com/mock/user')
       .then(response => response.json())
       .then(data => {
         document.getElementById('result').textContent = JSON.stringify(data, null, 2);
