@@ -1,4 +1,6 @@
-import  { useState } from 'react';
+import { useState } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const MockForm = () => {
   const [path, setPath] = useState('/mock/user');
@@ -9,37 +11,40 @@ const MockForm = () => {
   const [curlCommand, setCurlCommand] = useState('');
   const [mockUrl, setMockUrl] = useState('');
 
-
   const handleStartMocking = async () => {
-  try {
-    const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        path,
-        method,
-        status: Number(status),
-        response: JSON.parse(response),
-        delay: Number(delay),
-      }),
-    });
-    const data = await res.text();
-    const fullUrl = `https://mockflow-backend.onrender.com${path}`;
-    setMockUrl(fullUrl);
-    generateCurlCommand(method, fullUrl, response);
-    alert(data);
-  } catch (error) {
-    console.error(error);
-    alert('Error starting mock server. Check the console for details.');
-  }
-};
+    try {
+      const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          path,
+          method,
+          status: Number(status),
+          response: JSON.parse(response),
+          delay: Number(delay),
+        }),
+      });
 
+      const text = await res.text();
+      const fullUrl = `https://mockflow-backend.onrender.com${path}`;
+      setMockUrl(fullUrl);
+      generateCurlCommand(method, fullUrl, response);
+
+      if (!res.ok) {
+        toast.error(`Error: ${text}`);
+      } else {
+        toast.success(text);
+      }
+    } catch (error: any) {
+      toast.error(`Failed to start mock: ${error.message || error}`);
+    }
+  };
 
   const generateCurlCommand = (method: string, url: string, body: string) => {
     let command = `curl -X ${method} "${url}"`;
-    if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+    if (['POST', 'PUT', 'PATCH'].includes(method)) {
       command += ` -H "Content-Type: application/json" -d '${body}'`;
     }
     setCurlCommand(command);
@@ -47,10 +52,10 @@ const MockForm = () => {
 
   return (
     <div className="w-full max-w-4xl">
+      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} />
       <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20">
         <div className="p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-300 mb-1">Endpoint Path</label>
               <input
@@ -116,22 +121,42 @@ const MockForm = () => {
 
           {mockUrl && (
             <div className="mt-6 p-4 bg-black/30 rounded-lg">
-                <label className="block text-sm font-medium text-gray-300">Your mock endpoint is live:</label>
-                <div className="flex items-center mt-2">
-                    <input type="text" readOnly value={mockUrl} className="w-full bg-transparent text-white/80 border-none p-0 focus:ring-0" />
-                    <button onClick={() => navigator.clipboard.writeText(mockUrl)} className="ml-2 text-sm text-indigo-400 hover:text-indigo-300">Copy</button>
-                </div>
+              <label className="block text-sm font-medium text-gray-300">Your mock endpoint is live:</label>
+              <div className="flex items-center mt-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={mockUrl}
+                  className="w-full bg-transparent text-white/80 border-none p-0 focus:ring-0"
+                />
+                <button
+                  onClick={() => navigator.clipboard.writeText(mockUrl)}
+                  className="ml-2 text-sm text-indigo-400 hover:text-indigo-300"
+                >
+                  Copy
+                </button>
+              </div>
             </div>
           )}
 
           {curlCommand && (
-              <div className="mt-4 p-4 bg-black/30 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-300">CURL Command:</label>
-                  <div className="flex items-center mt-2">
-                      <input type="text" readOnly value={curlCommand} className="w-full bg-transparent text-white/80 border-none p-0 focus:ring-0" />
-                      <button onClick={() => navigator.clipboard.writeText(curlCommand)} className="ml-2 text-sm text-indigo-400 hover:text-indigo-300">Copy</button>
-                  </div>
+            <div className="mt-4 p-4 bg-black/30 rounded-lg">
+              <label className="block text-sm font-medium text-gray-300">CURL Command:</label>
+              <div className="flex items-center mt-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={curlCommand}
+                  className="w-full bg-transparent text-white/80 border-none p-0 focus:ring-0"
+                />
+                <button
+                  onClick={() => navigator.clipboard.writeText(curlCommand)}
+                  className="ml-2 text-sm text-indigo-400 hover:text-indigo-300"
+                >
+                  Copy
+                </button>
               </div>
+            </div>
           )}
         </div>
       </div>
@@ -139,4 +164,4 @@ const MockForm = () => {
   );
 };
 
-export default MockForm; 
+export default MockForm;
