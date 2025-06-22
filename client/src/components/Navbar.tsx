@@ -4,7 +4,7 @@ const Navbar = () => {
   return (
     <nav className="fixed top-5 left-0 right-0 z-10">
       <div className="container mx-auto px-6 py-4 flex justify-between items-center  rounded-xl ">
-        {/* Logo and Brand */}
+      
         <div className="flex items-center">
           <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
@@ -12,14 +12,14 @@ const Navbar = () => {
           <h1 className="text-xl font-semibold text-white ml-2">MockFlow</h1>
         </div>
 
-        {/* GitHub Link */}
+      
         <a
           href="https://github.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-gray-300 hover:text-white flex items-center gap-2"
         >
-          {/* GitHub Icon */}
+        
           <svg
             className="w-5 h-5"
             fill="currentColor"
