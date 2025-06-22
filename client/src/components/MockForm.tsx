@@ -11,30 +11,31 @@ const MockForm = () => {
 
 
   const handleStartMocking = async () => {
-    try {
-      const res = await fetch('http://localhost:3001/start-mock', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          path,
-          method,
-          status: Number(status),
-          response: JSON.parse(response),
-          delay: Number(delay),
-        }),
-      });
-      const data = await res.text();
-      const fullUrl = `http://localhost:3001${path}`;
-      setMockUrl(fullUrl);
-      generateCurlCommand(method, fullUrl, response);
-      alert(data);
-    } catch (error) {
-      console.error(error);
-      alert('Error starting mock server. Check the console for details.');
-    }
-  };
+  try {
+    const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        path,
+        method,
+        status: Number(status),
+        response: JSON.parse(response),
+        delay: Number(delay),
+      }),
+    });
+    const data = await res.text();
+    const fullUrl = `https://mockflow-backend.onrender.com${path}`;
+    setMockUrl(fullUrl);
+    generateCurlCommand(method, fullUrl, response);
+    alert(data);
+  } catch (error) {
+    console.error(error);
+    alert('Error starting mock server. Check the console for details.');
+  }
+};
+
 
   const generateCurlCommand = (method: string, url: string, body: string) => {
     let command = `curl -X ${method} "${url}"`;
