@@ -18,11 +18,9 @@ interface RequestLog {
 
 interface RequestHistoryProps {
   mockId: string;
-  mockPath: string;
-  mockMethod: string;
 }
 
-const RequestHistory = ({ mockId, mockPath, mockMethod }: RequestHistoryProps) => {
+const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   const [requests, setRequests] = useState<RequestLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);

@@ -217,8 +217,6 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                       <div className="mt-6 border-t border-white/10 pt-6">
                         <RequestHistory 
                           mockId={mock._id}
-                          mockPath={mock.path}
-                          mockMethod={mock.method}
                         />
                       </div>
                     )}
