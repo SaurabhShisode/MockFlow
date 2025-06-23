@@ -219,7 +219,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                   <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Headers</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
+                      <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
                         {safeJsonStringify(request.headers)}
                       </pre>
                     </div>
@@ -227,7 +227,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     {request.queryParams && Object.keys(request.queryParams).length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-white mb-2">Query Parameters</h4>
-                        <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
+                        <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
                           {safeJsonStringify(request.queryParams)}
                         </pre>
                       </div>
@@ -236,7 +236,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     {request.requestBody && (
                       <div>
                         <h4 className="text-sm font-medium text-white mb-2">Request Body</h4>
-                        <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
+                        <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
                           {safeJsonStringify(request.requestBody)}
                         </pre>
                       </div>
@@ -244,7 +244,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Response Body</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
+                      <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
                         {safeJsonStringify(request.responseBody)}
                       </pre>
                     </div>
@@ -252,7 +252,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">CURL Command</h4>
                       <div className="flex items-center space-x-2">
-                        <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto flex-1">
+                        <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64 flex-1">
                           {generateCurlCommand(request)}
                         </pre>
                         <button
