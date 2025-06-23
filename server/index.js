@@ -31,6 +31,13 @@ async function loadExistingMocks() {
 
 async function logRequest(mock, req, res, responseBody, statusCode, responseTime) {
   try {
+    console.log(`Logging request for mock ${mock._id}:`, {
+      method: req.method,
+      path: req.path,
+      statusCode,
+      responseTime
+    });
+
     const requestLog = new RequestLog({
       mockId: mock._id,
       method: req.method,
@@ -45,8 +52,11 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
     });
 
     await requestLog.save();
+    console.log(`Request logged successfully with ID: ${requestLog._id}`);
 
     const logCount = await RequestLog.countDocuments({ mockId: mock._id });
+    console.log(`Total logs for mock ${mock._id}: ${logCount}`);
+    
     if (logCount > 50) {
       const oldestLogs = await RequestLog.find({ mockId: mock._id })
         .sort({ timestamp: 1 })
@@ -54,6 +64,7 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
       
       if (oldestLogs.length > 0) {
         await RequestLog.deleteMany({ _id: { $in: oldestLogs.map(log => log._id) } });
+        console.log(`Cleaned up ${oldestLogs.length} old logs for mock ${mock._id}`);
       }
     }
   } catch (error) {
@@ -151,9 +162,13 @@ app.get('/mocks/:id/requests', async (req, res) => {
     const { id } = req.params;
     const { limit = 20 } = req.query;
     
+    console.log(`Fetching requests for mock ${id} with limit ${limit}`);
+    
     const requests = await RequestLog.find({ mockId: id })
       .sort({ timestamp: -1 })
       .limit(parseInt(limit));
+    
+    console.log(`Found ${requests.length} requests for mock ${id}`);
     
     res.json(requests);
   } catch (error) {
@@ -181,6 +196,41 @@ app.delete('/mocks/:id', async (req, res) => {
   }
 });
 
+app.get('/test-logging/:mockId', async (req, res) => {
+  try {
+    const { mockId } = req.params;
+    
+    console.log(`Testing logging for mock ${mockId}`);
+    
+    const mock = await Mock.findById(mockId);
+    if (!mock) {
+      return res.status(404).json({ error: 'Mock not found' });
+    }
+    
+    const logCount = await RequestLog.countDocuments({ mockId });
+    const recentLogs = await RequestLog.find({ mockId })
+      .sort({ timestamp: -1 })
+      .limit(5);
+    
+    res.json({
+      mockId,
+      mockPath: mock.path,
+      mockMethod: mock.method,
+      totalLogs: logCount,
+      recentLogs: recentLogs.map(log => ({
+        id: log._id,
+        timestamp: log.timestamp,
+        method: log.method,
+        path: log.path,
+        statusCode: log.statusCode
+      }))
+    });
+  } catch (error) {
+    console.error('Error testing logging:', error);
+    res.status(500).json({ error: 'Failed to test logging' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.json({ 
     message: 'MockFlow Backend is running!',
@@ -189,6 +239,7 @@ app.get('/', (req, res) => {
       'POST /start-mock': 'Create a new mock endpoint',
       'GET /mocks': 'Get all mocks',
       'GET /mocks/:id/requests': 'Get request history for a mock',
+      'GET /test-logging/:mockId': 'Test request logging for a mock',
       'DELETE /mocks/:id': 'Delete a mock endpoint'
     }
   });

@@ -32,11 +32,13 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
       const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=50`);
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched requests:', data);
         setRequests(data);
       } else {
         toast.error('Failed to fetch request history');
       }
     } catch (error) {
+      console.error('Error fetching requests:', error);
       toast.error('Error fetching request history');
     } finally {
       setLoading(false);
@@ -94,14 +96,32 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
   const truncateBody = (body: any, maxLength: number = 100) => {
     if (!body) return 'No body';
-    const str = typeof body === 'string' ? body : JSON.stringify(body);
-    return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+    try {
+      const str = typeof body === 'string' ? body : JSON.stringify(body);
+      return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
+    } catch (error) {
+      return 'Invalid body data';
+    }
   };
 
   const getStatusColor = (status: number) => {
     if (status >= 200 && status < 300) return 'text-green-400';
     if (status >= 400 && status < 500) return 'text-yellow-400';
     return 'text-red-400';
+  };
+
+  const safeJsonStringify = (obj: any) => {
+    try {
+      return JSON.stringify(obj, null, 2);
+    } catch (error) {
+      console.error('Error stringifying object:', error);
+      return 'Error displaying data';
+    }
+  };
+
+  const handleViewDetails = (requestId: string) => {
+    console.log('Toggling expanded request:', requestId);
+    setExpandedRequest(expandedRequest === requestId ? null : requestId);
   };
 
   useEffect(() => {
@@ -162,7 +182,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                   </div>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => setExpandedRequest(expandedRequest === request._id ? null : request._id)}
+                      onClick={() => handleViewDetails(request._id)}
                       className="px-2 py-1 bg-gray-600/20 text-gray-300 rounded text-xs hover:bg-gray-600/30 transition-colors"
                     >
                       {expandedRequest === request._id ? 'Hide Details' : 'View Details'}
@@ -200,7 +220,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Headers</h4>
                       <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
-                        {JSON.stringify(request.headers, null, 2)}
+                        {safeJsonStringify(request.headers)}
                       </pre>
                     </div>
 
@@ -208,7 +228,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                       <div>
                         <h4 className="text-sm font-medium text-white mb-2">Query Parameters</h4>
                         <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
-                          {JSON.stringify(request.queryParams, null, 2)}
+                          {safeJsonStringify(request.queryParams)}
                         </pre>
                       </div>
                     )}
@@ -217,7 +237,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                       <div>
                         <h4 className="text-sm font-medium text-white mb-2">Request Body</h4>
                         <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
-                          {JSON.stringify(request.requestBody, null, 2)}
+                          {safeJsonStringify(request.requestBody)}
                         </pre>
                       </div>
                     )}
@@ -225,7 +245,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Response Body</h4>
                       <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
-                        {JSON.stringify(request.responseBody, null, 2)}
+                        {safeJsonStringify(request.responseBody)}
                       </pre>
                     </div>
 
