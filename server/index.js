@@ -7,15 +7,12 @@ const Mock = require('./models/Mock');
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 connectDB();
 
 app.use(cors());
 app.use(express.json());
 
-
 let activeRoutes = new Map();
-
 
 async function loadExistingMocks() {
   try {
@@ -36,7 +33,6 @@ function registerMockRoute(mock) {
   
   app[mock.method.toLowerCase()](mock.path, async (req, res) => {
     try {
-
       await Mock.findByIdAndUpdate(mock._id, {
         $inc: { accessCount: 1 },
         lastAccessed: new Date()
@@ -54,7 +50,6 @@ function registerMockRoute(mock) {
   });
 }
 
-
 app.post('/start-mock', async (req, res) => {
   try {
     const { path, method, status, response, delay } = req.body;
@@ -65,7 +60,6 @@ app.post('/start-mock', async (req, res) => {
 
     const routeKey = `${method}:${path}`;
     
-  
     const existingMock = await Mock.findOne({ path, method });
     if (existingMock) {
       return res.status(409).json({ 
@@ -74,7 +68,6 @@ app.post('/start-mock', async (req, res) => {
       });
     }
 
- 
     const newMock = new Mock({
       path,
       method: method.toUpperCase(),
@@ -109,14 +102,12 @@ app.get('/mocks', async (req, res) => {
   }
 });
 
-
 app.delete('/mocks/:id', async (req, res) => {
   try {
     const mock = await Mock.findByIdAndDelete(req.params.id);
     if (!mock) {
       return res.status(404).json({ error: 'Mock not found' });
     }
-
 
     const routeKey = `${mock.method}:${mock.path}`;
     activeRoutes.delete(routeKey);
@@ -127,7 +118,6 @@ app.delete('/mocks/:id', async (req, res) => {
     res.status(500).json({ error: 'Failed to delete mock' });
   }
 });
-
 
 app.get('/', (req, res) => {
   res.json({ 
@@ -140,7 +130,6 @@ app.get('/', (req, res) => {
     }
   });
 });
-
 
 app.listen(port, async () => {
   console.log(`Mock server listening at http://localhost:${port}`);

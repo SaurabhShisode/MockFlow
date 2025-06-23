@@ -17,7 +17,7 @@ export interface MockListRef {
   fetchMocks: () => void;
 }
 
-const MockList = forwardRef<MockListRef>((props, ref) => {
+const MockList = forwardRef<MockListRef>((_, ref) => {
   const [mocks, setMocks] = useState<Mock[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,7 +49,7 @@ const MockList = forwardRef<MockListRef>((props, ref) => {
       
       if (response.ok) {
         toast.success('Mock deleted successfully');
-        fetchMocks(); // Refresh the list
+        fetchMocks();
       } else {
         toast.error('Failed to delete mock');
       }
