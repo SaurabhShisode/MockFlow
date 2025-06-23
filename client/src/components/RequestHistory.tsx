@@ -224,7 +224,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                       </pre>
                     </div>
 
-                    {Object.keys(request.queryParams).length > 0 && (
+                    {request.queryParams && Object.keys(request.queryParams).length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-white mb-2">Query Parameters</h4>
                         <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto">
