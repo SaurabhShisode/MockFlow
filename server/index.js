@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
 const Mock = require('./models/Mock');
+const RequestLog = require('./models/RequestLog');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -28,10 +29,46 @@ async function loadExistingMocks() {
   }
 }
 
+async function logRequest(mock, req, res, responseBody, statusCode, responseTime) {
+  try {
+    const requestLog = new RequestLog({
+      mockId: mock._id,
+      method: req.method,
+      path: req.path,
+      headers: req.headers,
+      queryParams: req.query,
+      requestBody: req.body,
+      responseBody: responseBody,
+      statusCode: statusCode,
+      clientIP: req.ip || req.connection.remoteAddress || req.headers['x-forwarded-for'],
+      responseTime: responseTime
+    });
+
+    await requestLog.save();
+
+    const logCount = await RequestLog.countDocuments({ mockId: mock._id });
+    if (logCount > 50) {
+      const oldestLogs = await RequestLog.find({ mockId: mock._id })
+        .sort({ timestamp: 1 })
+        .limit(logCount - 50);
+      
+      if (oldestLogs.length > 0) {
+        await RequestLog.deleteMany({ _id: { $in: oldestLogs.map(log => log._id) } });
+      }
+    }
+  } catch (error) {
+    console.error('Error logging request:', error);
+  }
+}
+
 function registerMockRoute(mock) {
   const routeKey = `${mock.method}:${mock.path}`;
   
   app[mock.method.toLowerCase()](mock.path, async (req, res) => {
+    const startTime = Date.now();
+    let responseBody;
+    let statusCode;
+    
     try {
       await Mock.findByIdAndUpdate(mock._id, {
         $inc: { accessCount: 1 },
@@ -42,10 +79,17 @@ function registerMockRoute(mock) {
         await new Promise(resolve => setTimeout(resolve, mock.delay));
       }
 
-      res.status(mock.status).json(mock.response);
+      responseBody = mock.response;
+      statusCode = mock.status;
+      res.status(statusCode).json(responseBody);
     } catch (error) {
       console.error('Error serving mock:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      responseBody = { error: 'Internal server error' };
+      statusCode = 500;
+      res.status(statusCode).json(responseBody);
+    } finally {
+      const responseTime = Date.now() - startTime;
+      logRequest(mock, req, res, responseBody, statusCode, responseTime);
     }
   });
 }
@@ -102,12 +146,30 @@ app.get('/mocks', async (req, res) => {
   }
 });
 
+app.get('/mocks/:id/requests', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 20 } = req.query;
+    
+    const requests = await RequestLog.find({ mockId: id })
+      .sort({ timestamp: -1 })
+      .limit(parseInt(limit));
+    
+    res.json(requests);
+  } catch (error) {
+    console.error('Error fetching request logs:', error);
+    res.status(500).json({ error: 'Failed to fetch request logs' });
+  }
+});
+
 app.delete('/mocks/:id', async (req, res) => {
   try {
     const mock = await Mock.findByIdAndDelete(req.params.id);
     if (!mock) {
       return res.status(404).json({ error: 'Mock not found' });
     }
+
+    await RequestLog.deleteMany({ mockId: req.params.id });
 
     const routeKey = `${mock.method}:${mock.path}`;
     activeRoutes.delete(routeKey);
@@ -126,6 +188,7 @@ app.get('/', (req, res) => {
     endpoints: {
       'POST /start-mock': 'Create a new mock endpoint',
       'GET /mocks': 'Get all mocks',
+      'GET /mocks/:id/requests': 'Get request history for a mock',
       'DELETE /mocks/:id': 'Delete a mock endpoint'
     }
   });
