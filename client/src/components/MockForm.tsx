@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-const MockForm = () => {
+interface MockFormProps {
+  onMockCreated?: () => void;
+}
+
+const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [path, setPath] = useState('/mock/user');
   const [method, setMethod] = useState('GET');
   const [status, setStatus] = useState(200);
@@ -35,6 +39,9 @@ const MockForm = () => {
         toast.error(`Error: ${text}`);
       } else {
         toast.success(text);
+        if (onMockCreated) {
+          onMockCreated();
+        }
       }
     } catch (error: any) {
       toast.error(`Failed to start mock: ${error.message || error}`);
