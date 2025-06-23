@@ -1,5 +1,6 @@
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { toast } from 'react-toastify';
+import BouncingDotsLoader from './BouncingDotsLoader';
 
 interface Mock {
   _id: string;
@@ -20,8 +21,10 @@ export interface MockListRef {
 const MockList = forwardRef<MockListRef>((_, ref) => {
   const [mocks, setMocks] = useState<Mock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   const fetchMocks = async () => {
+    setLoading(true);
     try {
       const response = await fetch('https://mockflow-backend.onrender.com/mocks');
       if (response.ok) {
@@ -42,6 +45,7 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
   }));
 
   const deleteMock = async (id: string) => {
+    setDeletingIds(prev => new Set(prev).add(id));
     try {
       const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${id}`, {
         method: 'DELETE',
@@ -55,6 +59,12 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
       }
     } catch (error) {
       toast.error('Error deleting mock');
+    } finally {
+      setDeletingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
     }
   };
 
@@ -82,13 +92,9 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
     return (
       <div className="w-full max-w-4xl">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-8">
-          <div className="animate-pulse">
-            <div className="h-4 bg-white/20 rounded w-1/4 mb-4"></div>
-            <div className="space-y-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-white/10 rounded"></div>
-              ))}
-            </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <BouncingDotsLoader size="lg" color="text-indigo-400" />
+            <p className="text-gray-400 mt-4">Loading your mocks...</p>
           </div>
         </div>
       </div>
@@ -103,9 +109,17 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
             <h2 className="text-2xl font-bold text-white">Your Mock Endpoints</h2>
             <button
               onClick={fetchMocks}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+              disabled={loading}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
-              Refresh
+              {loading ? (
+                <>
+                  <BouncingDotsLoader size="sm" color="text-white" />
+                  <span className="ml-2">Refreshing...</span>
+                </>
+              ) : (
+                'Refresh'
+              )}
             </button>
           </div>
 
@@ -143,12 +157,17 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                     </div>
                     <button
                       onClick={() => deleteMock(mock._id)}
-                      className="text-red-400 hover:text-red-300 transition-colors"
+                      disabled={deletingIds.has(mock._id)}
+                      className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
                       title="Delete mock"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      {deletingIds.has(mock._id) ? (
+                        <BouncingDotsLoader size="sm" color="text-red-400" />
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
                     </button>
                   </div>
 

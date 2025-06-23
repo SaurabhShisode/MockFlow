@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
+import BouncingDotsLoader from './BouncingDotsLoader';
 
 interface MockFormProps {
   onMockCreated?: () => void;
@@ -13,8 +14,10 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [delay, setDelay] = useState(0);
   const [curlCommand, setCurlCommand] = useState('');
   const [mockUrl, setMockUrl] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
 
   const handleStartMocking = async () => {
+    setIsCreating(true);
     try {
       const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
         method: 'POST',
@@ -45,6 +48,8 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
       }
     } catch (error: any) {
       toast.error(`Failed to start mock: ${error.message || error}`);
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -68,6 +73,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                 className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
                 value={path}
                 onChange={(e) => setPath(e.target.value)}
+                disabled={isCreating}
               />
             </div>
 
@@ -77,6 +83,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                 className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
+                disabled={isCreating}
               >
                 <option className="bg-gray-900">GET</option>
                 <option className="bg-gray-900">POST</option>
@@ -93,6 +100,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                 className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
                 value={status}
                 onChange={(e) => setStatus(Number(e.target.value))}
+                disabled={isCreating}
               />
             </div>
 
@@ -103,6 +111,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                 className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
                 value={delay}
                 onChange={(e) => setDelay(Number(e.target.value))}
+                disabled={isCreating}
               />
             </div>
 
@@ -113,15 +122,24 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                 rows={10}
                 value={response}
                 onChange={(e) => setResponse(e.target.value)}
+                disabled={isCreating}
               ></textarea>
             </div>
           </div>
 
           <button
             onClick={handleStartMocking}
-            className="mt-8 w-full inline-flex justify-center rounded-md border border-transparent bg-indigo-600 py-3 px-4 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+            disabled={isCreating}
+            className="mt-8 w-full inline-flex justify-center items-center rounded-md border border-transparent bg-indigo-600 py-3 px-4 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Start Mock Server
+            {isCreating ? (
+              <>
+                <BouncingDotsLoader size="sm" color="text-white" />
+                <span className="ml-2">Creating Mock...</span>
+              </>
+            ) : (
+              'Start Mock Server'
+            )}
           </button>
 
           {mockUrl && (
