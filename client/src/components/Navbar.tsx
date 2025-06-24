@@ -1,5 +1,3 @@
-
-
 const Navbar = () => {
   return (
     <nav className="pt-10 top-5 left-0 right-0 z-10">
