@@ -40,7 +40,7 @@ const mockSchema = new mongoose.Schema({
   }
 });
 
-// Compound index to ensure unique path + method combinations
+
 mockSchema.index({ path: 1, method: 1 }, { unique: true });
 
 module.exports = mongoose.model('Mock', mockSchema); 
