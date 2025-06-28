@@ -20,3 +20,4 @@ const dynamicDataSchema = new mongoose.Schema({
 dynamicDataSchema.index({ path: 1 });
 
 module.exports = mongoose.model('DynamicData', dynamicDataSchema); 
+
