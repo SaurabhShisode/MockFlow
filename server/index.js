@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const Mock = require('./models/Mock');
 const RequestLog = require('./models/RequestLog');
+const dynamicHandler = require('./utils/dynamicHandler');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -90,9 +91,37 @@ function registerMockRoute(mock) {
         await new Promise(resolve => setTimeout(resolve, mock.delay));
       }
 
-      responseBody = mock.response;
-      statusCode = mock.status;
-      res.status(statusCode).json(responseBody);
+      // Check if this is a dynamic endpoint
+      if (mock.isDynamic) {
+        // Handle dynamic CRUD operations
+        switch (mock.method) {
+          case 'GET':
+            await dynamicHandler.handleGet(mock, req, res);
+            return;
+          case 'POST':
+            await dynamicHandler.handlePost(mock, req, res);
+            return;
+          case 'PUT':
+            await dynamicHandler.handlePut(mock, req, res);
+            return;
+          case 'DELETE':
+            await dynamicHandler.handleDelete(mock, req, res);
+            return;
+          case 'PATCH':
+            await dynamicHandler.handlePatch(mock, req, res);
+            return;
+          default:
+            responseBody = { error: 'Unsupported method for dynamic endpoint' };
+            statusCode = 405;
+            res.status(statusCode).json(responseBody);
+            return;
+        }
+      } else {
+        // Handle static response (original behavior)
+        responseBody = mock.response;
+        statusCode = mock.status;
+        res.status(statusCode).json(responseBody);
+      }
     } catch (error) {
       console.error('Error serving mock:', error);
       responseBody = { error: 'Internal server error' };
@@ -107,7 +136,7 @@ function registerMockRoute(mock) {
 
 app.post('/start-mock', async (req, res) => {
   try {
-    const { path, method, status, response, delay } = req.body;
+    const { path, method, status, response, delay, isDynamic } = req.body;
 
     if (!path || !method || !status || !response) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -128,7 +157,8 @@ app.post('/start-mock', async (req, res) => {
       method: method.toUpperCase(),
       status: Number(status),
       response: typeof response === 'string' ? JSON.parse(response) : response,
-      delay: Number(delay) || 0
+      delay: Number(delay) || 0,
+      isDynamic: Boolean(isDynamic)
     });
 
     await newMock.save();
@@ -138,7 +168,8 @@ app.post('/start-mock', async (req, res) => {
 
     res.status(200).json({ 
       message: `Mock created: ${method.toUpperCase()} ${path}`,
-      mockId: newMock._id
+      mockId: newMock._id,
+      isDynamic: newMock.isDynamic
     });
 
   } catch (error) {
@@ -184,7 +215,13 @@ app.delete('/mocks/:id', async (req, res) => {
       return res.status(404).json({ error: 'Mock not found' });
     }
 
+    // Clean up request logs
     await RequestLog.deleteMany({ mockId: req.params.id });
+    
+    // Clean up dynamic data if it was a dynamic endpoint
+    if (mock.isDynamic) {
+      await dynamicHandler.clearData(req.params.id);
+    }
 
     const routeKey = `${mock.method}:${mock.path}`;
     activeRoutes.delete(routeKey);
@@ -193,6 +230,55 @@ app.delete('/mocks/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting mock:', error);
     res.status(500).json({ error: 'Failed to delete mock' });
+  }
+});
+
+app.get('/mocks/:id/data', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const mock = await Mock.findById(id);
+    if (!mock) {
+      return res.status(404).json({ error: 'Mock not found' });
+    }
+    
+    if (!mock.isDynamic) {
+      return res.status(400).json({ error: 'This mock is not dynamic' });
+    }
+    
+    const dynamicData = await dynamicHandler.getDynamicData(mock._id, mock.path);
+    res.json({
+      mockId: mock._id,
+      path: mock.path,
+      method: mock.method,
+      data: dynamicData.data,
+      count: dynamicData.data.length,
+      lastUpdated: dynamicData.lastUpdated
+    });
+  } catch (error) {
+    console.error('Error fetching dynamic data:', error);
+    res.status(500).json({ error: 'Failed to fetch dynamic data' });
+  }
+});
+
+app.delete('/mocks/:id/data', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const mock = await Mock.findById(id);
+    if (!mock) {
+      return res.status(404).json({ error: 'Mock not found' });
+    }
+    
+    if (!mock.isDynamic) {
+      return res.status(400).json({ error: 'This mock is not dynamic' });
+    }
+    
+    await dynamicHandler.clearData(mock._id);
+    res.json({ message: 'Dynamic data cleared successfully' });
+  } catch (error) {
+    console.error('Error clearing dynamic data:', error);
+    res.status(500).json({ error: 'Failed to clear dynamic data' });
   }
 });
 

@@ -1,21 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mock API Test</title>
+  <title>Test DELETE /mock/crop API</title>
 </head>
 <body>
-  <h2>Mock API Response:</h2>
-  <pre id="result">Loading...</pre>
+  <h2>Test DELETE /mock/crop API</h2>
+  <button onclick="deleteCrop()">Send DELETE Request</button>
+  <div id="result" style="margin-top:20px;"></div>
 
   <script>
-    fetch('https://mockflow-backend.onrender.com/mock/user')
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+    function deleteCrop() {
+      fetch('https://mockflow-backend.onrender.com/mock/crop', {
+        method: 'DELETE'
+      })
+      .then(response => response.text().then(text => ({
+        status: response.status,
+        body: text
+      })))
+      .then(result => {
+        document.getElementById('result').innerHTML =
+          `<b>Status:</b> ${result.status}<br><b>Response:</b> ${result.body}`;
       })
       .catch(error => {
-        document.getElementById('result').textContent = 'Error: ' + error.message;
+        document.getElementById('result').innerHTML =
+          `<span style="color:red;"><b>Error:</b> ${error}</span>`;
       });
+    }
   </script>
 </body>
 </html>
