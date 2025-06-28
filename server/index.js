@@ -25,6 +25,17 @@ async function loadExistingMocks() {
       registerMockRoute(mock);
     });
     console.log(`Loaded ${mocks.length} existing mocks from database`);
+    
+    // Initialize dynamic data for existing dynamic mocks
+    const dynamicMocks = mocks.filter(mock => mock.isDynamic);
+    for (const mock of dynamicMocks) {
+      try {
+        await dynamicHandler.initializeData(mock.path, mock.response);
+        console.log(`Initialized dynamic data for existing path ${mock.path}`);
+      } catch (error) {
+        console.error(`Error initializing dynamic data for path ${mock.path}:`, error);
+      }
+    }
   } catch (error) {
     console.error('Error loading existing mocks:', error);
   }
@@ -163,6 +174,17 @@ app.post('/start-mock', async (req, res) => {
 
     await newMock.save();
 
+    // Initialize dynamic data if this is a dynamic endpoint
+    if (newMock.isDynamic) {
+      try {
+        await dynamicHandler.initializeData(newMock.path, newMock.response);
+        console.log(`Initialized dynamic data for path ${newMock.path}`);
+      } catch (error) {
+        console.error('Error initializing dynamic data:', error);
+        // Don't fail the mock creation if dynamic data initialization fails
+      }
+    }
+
     activeRoutes.set(routeKey, newMock);
     registerMockRoute(newMock);
 
@@ -220,7 +242,7 @@ app.delete('/mocks/:id', async (req, res) => {
     
     // Clean up dynamic data if it was a dynamic endpoint
     if (mock.isDynamic) {
-      await dynamicHandler.clearData(req.params.id);
+      await dynamicHandler.clearData(mock.path);
     }
 
     const routeKey = `${mock.method}:${mock.path}`;
@@ -246,7 +268,7 @@ app.get('/mocks/:id/data', async (req, res) => {
       return res.status(400).json({ error: 'This mock is not dynamic' });
     }
     
-    const dynamicData = await dynamicHandler.getDynamicData(mock._id, mock.path);
+    const dynamicData = await dynamicHandler.getDynamicData(mock.path);
     res.json({
       mockId: mock._id,
       path: mock.path,
@@ -274,7 +296,7 @@ app.delete('/mocks/:id/data', async (req, res) => {
       return res.status(400).json({ error: 'This mock is not dynamic' });
     }
     
-    await dynamicHandler.clearData(mock._id);
+    await dynamicHandler.clearData(mock.path);
     res.json({ message: 'Dynamic data cleared successfully' });
   } catch (error) {
     console.error('Error clearing dynamic data:', error);

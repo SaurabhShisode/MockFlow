@@ -5,13 +5,12 @@ class DynamicHandler {
     this.dataStore = new Map(); // In-memory cache for better performance
   }
 
-  // Get or create dynamic data for a mock
-  async getDynamicData(mockId, path) {
-    let dynamicData = await DynamicData.findOne({ mockId, path });
+  // Get or create dynamic data for a path (shared across all methods)
+  async getDynamicData(path) {
+    let dynamicData = await DynamicData.findOne({ path });
     
     if (!dynamicData) {
       dynamicData = new DynamicData({
-        mockId,
         path,
         data: []
       });
@@ -21,10 +20,39 @@ class DynamicHandler {
     return dynamicData;
   }
 
+  // Initialize dynamic data with initial response data
+  async initializeData(path, initialData) {
+    try {
+      let dynamicData = await DynamicData.findOne({ path });
+      
+      if (!dynamicData) {
+        dynamicData = new DynamicData({
+          path,
+          data: Array.isArray(initialData) ? initialData : []
+        });
+      } else if (Array.isArray(initialData) && initialData.length > 0) {
+        // Add IDs to initial data if they don't have them
+        const dataWithIds = initialData.map(item => ({
+          ...item,
+          id: item.id || this.generateId(),
+          createdAt: item.createdAt || new Date(),
+          updatedAt: item.updatedAt || new Date()
+        }));
+        dynamicData.data = dataWithIds;
+      }
+      
+      await dynamicData.save();
+      return dynamicData;
+    } catch (error) {
+      console.error('Error initializing dynamic data:', error);
+      throw error;
+    }
+  }
+
   // Handle GET requests - return all data or specific item by ID
   async handleGet(mock, req, res) {
     try {
-      const dynamicData = await this.getDynamicData(mock._id, mock.path);
+      const dynamicData = await this.getDynamicData(mock.path);
       
       // Check if requesting specific item by ID
       const itemId = req.params.id || req.query.id;
@@ -49,7 +77,7 @@ class DynamicHandler {
   // Handle POST requests - create new item
   async handlePost(mock, req, res) {
     try {
-      const dynamicData = await this.getDynamicData(mock._id, mock.path);
+      const dynamicData = await this.getDynamicData(mock.path);
       
       const newItem = {
         id: this.generateId(),
@@ -72,7 +100,7 @@ class DynamicHandler {
   // Handle PUT requests - update existing item
   async handlePut(mock, req, res) {
     try {
-      const dynamicData = await this.getDynamicData(mock._id, mock.path);
+      const dynamicData = await this.getDynamicData(mock.path);
       const itemId = req.params.id || req.query.id;
       
       if (!itemId) {
@@ -107,7 +135,7 @@ class DynamicHandler {
   // Handle DELETE requests - delete item
   async handleDelete(mock, req, res) {
     try {
-      const dynamicData = await this.getDynamicData(mock._id, mock.path);
+      const dynamicData = await this.getDynamicData(mock.path);
       const itemId = req.params.id || req.query.id;
       
       if (!itemId) {
@@ -140,7 +168,7 @@ class DynamicHandler {
   // Handle PATCH requests - partial update
   async handlePatch(mock, req, res) {
     try {
-      const dynamicData = await this.getDynamicData(mock._id, mock.path);
+      const dynamicData = await this.getDynamicData(mock.path);
       const itemId = req.params.id || req.query.id;
       
       if (!itemId) {
@@ -177,11 +205,11 @@ class DynamicHandler {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
   }
 
-  // Clear data for a specific mock (useful for cleanup)
-  async clearData(mockId) {
+  // Clear data for a specific path (useful for cleanup)
+  async clearData(path) {
     try {
-      await DynamicData.deleteMany({ mockId });
-      console.log(`Cleared dynamic data for mock ${mockId}`);
+      await DynamicData.deleteMany({ path });
+      console.log(`Cleared dynamic data for path ${path}`);
     } catch (error) {
       console.error('Error clearing dynamic data:', error);
     }
