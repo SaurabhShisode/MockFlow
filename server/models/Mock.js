@@ -26,11 +26,6 @@ const mockSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
-  isDynamic: {
-    type: Boolean,
-    default: false,
-    description: 'If true, the endpoint supports dynamic CRUD operations. If false, returns static response.'
-  },
   createdAt: {
     type: Date,
     default: Date.now
