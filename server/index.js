@@ -4,6 +4,7 @@ const cors = require('cors');
 const connectDB = require('./config/database');
 const Mock = require('./models/Mock');
 const RequestLog = require('./models/RequestLog');
+const dynamicHandler = require('./utils/dynamicHandler');
 
 const app = express();
 const port = process.env.PORT || 5000;
