@@ -13,6 +13,7 @@ interface Mock {
   createdAt: string;
   lastAccessed: string;
   accessCount: number;
+  isDynamic?: boolean;
 }
 
 export interface MockListRef {
@@ -154,6 +155,11 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                           {mock.method}
                         </span>
                         <span className="text-white font-mono text-sm">{mock.path}</span>
+                        {mock.isDynamic && (
+                          <span className="ml-2 px-2 py-1 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30  tracking-wide">
+                            Dynamic
+                          </span>
+                        )}
                         <span className={`px-2 py-1 rounded text-xs ${
                           mock.status >= 200 && mock.status < 300 ? 'bg-green-500/20 text-green-400' :
                           mock.status >= 400 && mock.status < 500 ? 'bg-yellow-500/20 text-yellow-400' :
