@@ -85,40 +85,49 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
 
 function registerMockRoute(mock) {
   const routeKey = `${mock.method}:${mock.path}`;
-  
-  app[mock.method.toLowerCase()](mock.path, async (req, res) => {
-    const startTime = Date.now();
-    let responseBody;
-    let statusCode;
-    
-    try {
-      await Mock.findByIdAndUpdate(mock._id, {
-        $inc: { accessCount: 1 },
-        lastAccessed: new Date()
-      });
 
-      if (mock.delay > 0) {
-        await new Promise(resolve => setTimeout(resolve, mock.delay));
+  if (mock.isDynamic) {
+    // Register all CRUD methods for dynamic mocks
+    app.get(mock.path, (req, res) => dynamicHandler.handleGet(mock, req, res));
+    app.post(mock.path, (req, res) => dynamicHandler.handlePost(mock, req, res));
+    app.put(mock.path, (req, res) => dynamicHandler.handlePut(mock, req, res));
+    app.delete(mock.path, (req, res) => dynamicHandler.handleDelete(mock, req, res));
+    app.patch(mock.path, (req, res) => dynamicHandler.handlePatch(mock, req, res));
+  } else {
+    app[mock.method.toLowerCase()](mock.path, async (req, res) => {
+      const startTime = Date.now();
+      let responseBody;
+      let statusCode;
+      
+      try {
+        await Mock.findByIdAndUpdate(mock._id, {
+          $inc: { accessCount: 1 },
+          lastAccessed: new Date()
+        });
+
+        if (mock.delay > 0) {
+          await new Promise(resolve => setTimeout(resolve, mock.delay));
+        }
+
+        responseBody = mock.response;
+        statusCode = mock.status;
+        res.status(statusCode).json(responseBody);
+      } catch (error) {
+        console.error('Error serving mock:', error);
+        responseBody = { error: 'Internal server error' };
+        statusCode = 500;
+        res.status(statusCode).json(responseBody);
+      } finally {
+        const responseTime = Date.now() - startTime;
+        logRequest(mock, req, res, responseBody, statusCode, responseTime);
       }
-
-      responseBody = mock.response;
-      statusCode = mock.status;
-      res.status(statusCode).json(responseBody);
-    } catch (error) {
-      console.error('Error serving mock:', error);
-      responseBody = { error: 'Internal server error' };
-      statusCode = 500;
-      res.status(statusCode).json(responseBody);
-    } finally {
-      const responseTime = Date.now() - startTime;
-      logRequest(mock, req, res, responseBody, statusCode, responseTime);
-    }
-  });
+    });
+  }
 }
 
 app.post('/start-mock', async (req, res) => {
   try {
-    const { path, method, status, response, delay } = req.body;
+    const { path, method, status, response, delay, isDynamic } = req.body;
 
     if (!path || !method || !status || !response) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -139,7 +148,8 @@ app.post('/start-mock', async (req, res) => {
       method: method.toUpperCase(),
       status: Number(status),
       response: typeof response === 'string' ? JSON.parse(response) : response,
-      delay: Number(delay) || 0
+      delay: Number(delay) || 0,
+      isDynamic: !!isDynamic
     });
 
     await newMock.save();

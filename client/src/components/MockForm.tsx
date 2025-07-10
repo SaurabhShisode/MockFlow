@@ -15,6 +15,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [curlCommand, setCurlCommand] = useState('');
   const [mockUrl, setMockUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [isDynamic, setIsDynamic] = useState(false);
 
   const handleStartMocking = async () => {
     setIsCreating(true);
@@ -30,6 +31,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
           status: Number(status),
           response: JSON.parse(response),
           delay: Number(delay),
+          isDynamic: isDynamic
         }),
       });
 
@@ -124,6 +126,20 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                 onChange={(e) => setResponse(e.target.value)}
                 disabled={isCreating}
               ></textarea>
+            </div>
+
+            <div className="md:col-span-2 flex items-center mt-2">
+              <input
+                id="isDynamic"
+                type="checkbox"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
+                checked={isDynamic}
+                onChange={e => setIsDynamic(e.target.checked)}
+                disabled={isCreating}
+              />
+              <label htmlFor="isDynamic" className="text-sm text-gray-300 select-none cursor-pointer">
+                Enable CRUD (dynamic) mock (GET, POST, PUT, DELETE, PATCH)
+              </label>
             </div>
           </div>
 

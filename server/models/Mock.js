@@ -37,6 +37,10 @@ const mockSchema = new mongoose.Schema({
   accessCount: {
     type: Number,
     default: 0
+  },
+  isDynamic: {
+    type: Boolean,
+    default: false
   }
 });
 
