@@ -1,6 +1,14 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
+const IMPORTANT_HEADERS = [
+  'content-type',
+  'authorization',
+  'accept',
+  'origin',
+  'user-agent',
+  'cookie'
+];
 
 interface RequestLog {
   _id: string;
@@ -84,23 +92,8 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
     }
   };
 
-  const generateCurlCommand = (request: RequestLog) => {
-    const url = `https://mockflow-backend.onrender.com${request.path}`;
-    let command = `curl -X ${request.method} "${url}"`;
 
-    Object.entries(request.headers || {}).forEach(([key, value]) => {
-      const lower = key.toLowerCase();
-      if (lower !== 'content-length' && lower !== 'host') {
-        command += ` -H "${key}: ${value}"`;
-      }
-    });
 
-    if (request.requestBody && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
-      command += ` -d '${JSON.stringify(request.requestBody)}'`;
-    }
-
-    return command;
-  };
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
@@ -192,7 +185,16 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Headers</h4>
                       <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
-  {JSON.stringify(request.headers, null, 2)}
+  {JSON.stringify(
+  Object.fromEntries(
+    Object.entries(request.headers || {}).filter(([key]) =>
+      IMPORTANT_HEADERS.includes(key.toLowerCase())
+    )
+  ),
+  null,
+  2
+)}
+
 </pre>
 
 
@@ -216,14 +218,6 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
                     </div>
 
-                    <div>
-                      <h4 className="text-sm font-medium text-white mb-2">CURL</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
-  {generateCurlCommand(request)}
-</pre>
-
-
-                    </div>
 
                     <button
                       onClick={() => replayRequest(request)}

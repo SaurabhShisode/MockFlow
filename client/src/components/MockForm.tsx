@@ -18,7 +18,7 @@ interface MockFormProps {
   onMockCreated?: () => void;
 }
 
-const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+
 
 const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [path, setPath] = useState('/mock/user');
@@ -74,14 +74,11 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
     setCurlCommand(cmd);
   };
 
-  const handleMethodSelect = (value: string) => {
-    setMethod(value);
-    setMethodOpen(false);
-  };
+
 
   return (
     <div className="w-full font-inter mt-8">
-      <div className="max-w-6xl mx-auto rounded-2xl bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-8 space-y-10">
+      <div className="max-w-5xl rounded-2xl items-center mx-auto bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-8 space-y-10">
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 

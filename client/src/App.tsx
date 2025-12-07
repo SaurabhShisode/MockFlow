@@ -40,11 +40,11 @@ function App() {
               </p>
 
               <div className="grid md:grid-cols-3 gap-6 text-left mt-12 font-inter">
-                <div className="bg-white/5 p-6 rounded-xl">
+                <div className="bg-white/5 p-6 rounded-xl ">
                   <div className="mb-4">
                     <Layers className="w-10 h-10 text-indigo-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-indigo-300 mb-2">Create Mocks Fast</h3>
+                  <h3 className="text-xl font-semibold text-indigo-300 mb-2 ">Create Mocks Fast</h3>
                   <p className="text-gray-400">Define methods, paths, responses and simulate backend behavior instantly.</p>
                 </div>
 
@@ -75,8 +75,8 @@ function App() {
           )}
 
           {activePage === 'create' && (
-            <div className="max-w-7xl mx-auto bg-white/5 p-8 rounded-2xl shadow-xl">
-              <h1 className="text-4xl font-bold mb-6 text-indigo-400">Create a Mock API</h1>
+            <div className="max-w-5xl  p-8 rounded-2xl shadow-xl font-inter mx-auto">
+              <h1 className="text-4xl font-bold mb-6 text-indigo-400 mx-auto">Create a Mock API</h1>
               <p className="text-gray-300 mb-8">
                 Configure your endpoint, choose a method, set a response, and start using your mock instantly.
               </p>
@@ -85,21 +85,21 @@ function App() {
           )}
 
           {activePage === 'mocks' && (
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto mt-14 font-inter">
               <h1 className="text-4xl font-bold mb-6 text-indigo-400">Your Mock Endpoints</h1>
               <MockList ref={mockListRef} />
             </div>
           )}
 
           {activePage === 'logs' && (
-            <div className="max-w-5xl mx-auto">
+            <div className="max-w-5xl mx-auto mt-14 font-inter">
               <h1 className="text-4xl font-bold mb-6 text-indigo-400">Request Logs</h1>
               <SidebarRequestLogs />
             </div>
           )}
 
           {activePage === 'settings' && (
-            <div className="max-w-4xl mx-auto bg-white/5 p-8 rounded-2xl shadow-xl">
+            <div className="max-w-4xl mx-auto bg-white/5 p-8 rounded-2xl shadow-xl font-inter">
               <h1 className="text-4xl font-bold mb-6 text-indigo-400">Settings</h1>
               <p className="text-gray-300">
                 Settings page placeholder. Add user profile, preferences or billing here.

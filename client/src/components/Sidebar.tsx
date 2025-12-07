@@ -1,4 +1,4 @@
-import React from 'react';
+
 
 type Page = 'home' | 'create' | 'mocks' | 'logs' | 'settings';
 
@@ -18,7 +18,7 @@ function Sidebar({ activePage, setActivePage }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-64 h-screen bg-gray-900 border-r border-gray-800 flex flex-col p-6 font-inter pt-14">
+    <aside className="w-64 min-h-screen bg-gray-900 border-r border-gray-800 flex flex-col p-6 font-inter pt-14">
 
       <div className="flex items-center mb-10">
         <svg className="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
