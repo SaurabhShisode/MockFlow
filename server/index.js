@@ -85,26 +85,24 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
 }
 
 function registerMockRoute(mock) {
-  const routeKey = `${mock.method}:${mock.path}`;
   const method = mock.method.toLowerCase();
 
-  // DYNAMIC MOCK HANDLER (register only the selected method)
   if (mock.isDynamic) {
-    app[method](mock.path, (req, res) => {
-      switch (mock.method) {
-        case "GET": return dynamicHandler.handleGet(mock, req, res);
-        case "POST": return dynamicHandler.handlePost(mock, req, res);
-        case "PUT": return dynamicHandler.handlePut(mock, req, res);
-        case "DELETE": return dynamicHandler.handleDelete(mock, req, res);
-        case "PATCH": return dynamicHandler.handlePatch(mock, req, res);
-      }
-    });
-    return; // IMPORTANT: prevent falling into static logic
+    const base = mock.path;
+
+    app.get(base, (req, res) => dynamicHandler.handleGet(mock, req, res));
+    app.post(base, (req, res) => dynamicHandler.handlePost(mock, req, res));
+
+    app.get(base + '/:id', (req, res) => dynamicHandler.handleGet(mock, req, res));
+    app.put(base + '/:id', (req, res) => dynamicHandler.handlePut(mock, req, res));
+    app.patch(base + '/:id', (req, res) => dynamicHandler.handlePatch(mock, req, res));
+    app.delete(base + '/:id', (req, res) => dynamicHandler.handleDelete(mock, req, res));
+
+    return;
   }
 
-  // STATIC MOCK HANDLER (your original static code)
   app[method](mock.path, async (req, res) => {
-    const startTime = Date.now();
+    const start = Date.now();
     let responseBody;
     let statusCode;
 
@@ -115,23 +113,23 @@ function registerMockRoute(mock) {
       });
 
       if (mock.delay > 0) {
-        await new Promise(resolve => setTimeout(resolve, mock.delay));
+        await new Promise(r => setTimeout(r, mock.delay));
       }
 
       responseBody = mock.response;
       statusCode = mock.status;
       res.status(statusCode).json(responseBody);
-    } catch (error) {
-      console.error('Error serving mock:', error);
+    } catch (err) {
       responseBody = { error: 'Internal server error' };
       statusCode = 500;
       res.status(statusCode).json(responseBody);
     } finally {
-      const responseTime = Date.now() - startTime;
-      logRequest(mock, req, res, responseBody, statusCode, responseTime);
+      const time = Date.now() - start;
+      logRequest(mock, req, res, responseBody, statusCode, time);
     }
   });
 }
+
 
 app.post('/start-mock', async (req, res) => {
   try {
@@ -162,14 +160,13 @@ app.post('/start-mock', async (req, res) => {
 
     await newMock.save();
 
-    // Initialize dynamic data if this is a dynamic endpoint
     if (newMock.isDynamic) {
       try {
         await dynamicHandler.initializeData(newMock.path, newMock.response);
         console.log(`Initialized dynamic data for path ${newMock.path}`);
       } catch (error) {
         console.error('Error initializing dynamic data:', error);
-        // Don't fail the mock creation if dynamic data initialization fails
+        
       }
     }
 
