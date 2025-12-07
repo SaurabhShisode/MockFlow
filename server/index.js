@@ -283,6 +283,42 @@ app.get('/test-logging/:mockId', async (req, res) => {
   }
 });
 
+
+app.get('/logs/recent', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+
+
+    const logs = await RequestLog.find({})
+      .sort({ timestamp: -1 })
+      .limit(limit)
+      .lean();
+
+   
+    const mockIds = [...new Set(logs.map(log => log.mockId))];
+    const mocks = await Mock.find({ _id: { $in: mockIds } })
+      .select('_id path method')
+      .lean();
+
+    const mockMap = {};
+    mocks.forEach(m => {
+      mockMap[m._id] = m;
+    });
+
+
+    const combined = logs.map(log => ({
+      ...log,
+      mockName: mockMap[log.mockId]?.path || 'Unknown Mock',
+      mockMethod: mockMap[log.mockId]?.method || ''
+    }));
+
+    res.json(combined);
+  } catch (error) {
+    console.error('Error fetching recent logs:', error);
+    res.status(500).json({ error: 'Failed to fetch recent logs' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.json({ 
     message: 'MockFlow Backend is running!',

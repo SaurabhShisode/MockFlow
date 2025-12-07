@@ -37,10 +37,11 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
     try {
       let url: string;
       if (mockId) {
-        url = `https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=50`;
+        url = `https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=5`;
       } else {
-        url = `https://mockflow-backend.onrender.com/requests?limit=100`;
+        url = `https://mockflow-backend.onrender.com/requests?limit=5`;
       }
+
 
       const response = await fetch(url);
       if (response.ok) {
@@ -148,29 +149,27 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                 <div className="flex justify-between items-start">
                   <div className="flex items-center space-x-3">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-medium ${
-                        request.method === 'GET'
+                      className={`px-2 py-1 rounded text-xs font-medium ${request.method === 'GET'
                           ? 'bg-green-500/20 text-green-400'
                           : request.method === 'POST'
-                          ? 'bg-blue-500/20 text-blue-400'
-                          : request.method === 'PUT'
-                          ? 'bg-yellow-500/20 text-yellow-400'
-                          : request.method === 'DELETE'
-                          ? 'bg-red-500/20 text-red-400'
-                          : 'bg-purple-500/20 text-purple-400'
-                      }`}
+                            ? 'bg-blue-500/20 text-blue-400'
+                            : request.method === 'PUT'
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : request.method === 'DELETE'
+                                ? 'bg-red-500/20 text-red-400'
+                                : 'bg-purple-500/20 text-purple-400'
+                        }`}
                     >
                       {request.method}
                     </span>
 
                     <span
-                      className={`px-2 py-1 rounded text-xs ${
-                        request.statusCode >= 200 && request.statusCode < 300
+                      className={`px-2 py-1 rounded text-xs ${request.statusCode >= 200 && request.statusCode < 300
                           ? 'text-green-400'
                           : request.statusCode >= 400 && request.statusCode < 500
-                          ? 'text-yellow-400'
-                          : 'text-red-400'
-                      }`}
+                            ? 'text-yellow-400'
+                            : 'text-red-400'
+                        }`}
                     >
                       {request.statusCode}
                     </span>
@@ -192,30 +191,38 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                   <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Headers</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
-                        {JSON.stringify(request.headers, null, 2)}
-                      </pre>
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
+  {JSON.stringify(request.headers, null, 2)}
+</pre>
+
+
                     </div>
 
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Request Body</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
-                        {JSON.stringify(request.requestBody, null, 2)}
-                      </pre>
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
+  {JSON.stringify(request.requestBody, null, 2)}
+</pre>
+
+
                     </div>
 
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Response Body</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
-                        {JSON.stringify(request.responseBody, null, 2)}
-                      </pre>
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
+  {JSON.stringify(request.responseBody, null, 2)}
+</pre>
+
+
                     </div>
 
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">CURL</h4>
-                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
-                        {generateCurlCommand(request)}
-                      </pre>
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
+  {generateCurlCommand(request)}
+</pre>
+
+
                     </div>
 
                     <button

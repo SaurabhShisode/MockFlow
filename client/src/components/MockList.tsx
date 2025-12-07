@@ -155,17 +155,16 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center space-x-3">
                         <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${
-                            mock.method === 'GET'
-                              ? 'bg-green-500/20 text-green-400'
-                              : mock.method === 'POST'
+                          className={`px-2 py-1 rounded text-xs font-medium ${mock.method === 'GET'
+                            ? 'bg-green-500/20 text-green-400'
+                            : mock.method === 'POST'
                               ? 'bg-blue-500/20 text-blue-400'
                               : mock.method === 'PUT'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : mock.method === 'DELETE'
-                              ? 'bg-red-500/20 text-red-400'
-                              : 'bg-purple-500/20 text-purple-400'
-                          }`}
+                                ? 'bg-yellow-500/20 text-yellow-400'
+                                : mock.method === 'DELETE'
+                                  ? 'bg-red-500/20 text-red-400'
+                                  : 'bg-purple-500/20 text-purple-400'
+                            }`}
                         >
                           {mock.method}
                         </span>
@@ -176,13 +175,12 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                           </span>
                         )}
                         <span
-                          className={`px-2 py-1 rounded text-xs ${
-                            mock.status >= 200 && mock.status < 300
-                              ? 'bg-green-500/20 text-green-400'
-                              : mock.status >= 400 && mock.status < 500
+                          className={`px-2 py-1 rounded text-xs ${mock.status >= 200 && mock.status < 300
+                            ? 'bg-green-500/20 text-green-400'
+                            : mock.status >= 400 && mock.status < 500
                               ? 'bg-yellow-500/20 text-yellow-400'
                               : 'bg-red-500/20 text-red-400'
-                          }`}
+                            }`}
                         >
                           {mock.status}
                         </span>
@@ -216,18 +214,13 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-300 mb-3">
-                      <div>
-                        <span className="text-gray-400">Delay:</span> {mock.delay}ms
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Accesses:</span> {mock.accessCount}
-                      </div>
-                      <div>
-                        <span className="text-gray-400">Created:</span>{' '}
-                        {new Date(mock.createdAt).toLocaleDateString()}
-                      </div>
+                    <div className="flex flex-row md:items-center  gap-4 text-sm text-gray-300 mb-3">
+                      <div><span className="text-gray-400">Delay:</span> {mock.delay}ms</div>
+                      <div><span className="text-gray-400">Accesses:</span> {mock.accessCount}</div>
+                      <div><span className="text-gray-400">Created:</span> {new Date(mock.createdAt).toLocaleDateString()}</div>
                     </div>
+
+
 
                     <div className="flex space-x-2">
                       <button
