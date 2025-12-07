@@ -97,7 +97,7 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
 
   if (loading) {
     return (
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl font-inter">
         <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20 p-8">
           <div className="flex flex-col items-center justify-center py-12">
             <BouncingDotsLoader size="lg" color="text-indigo-400" />
@@ -109,7 +109,7 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
   }
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="w-full max-w-4xl font-inter">
       <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20">
         <div className="p-8">
           <div className="flex justify-between items-center mb-6">

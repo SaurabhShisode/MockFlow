@@ -86,44 +86,51 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
 
 function registerMockRoute(mock) {
   const routeKey = `${mock.method}:${mock.path}`;
+  const method = mock.method.toLowerCase();
 
+  // DYNAMIC MOCK HANDLER (register only the selected method)
   if (mock.isDynamic) {
-    // Register all CRUD methods for dynamic mocks
-    app.get(mock.path, (req, res) => dynamicHandler.handleGet(mock, req, res));
-    app.post(mock.path, (req, res) => dynamicHandler.handlePost(mock, req, res));
-    app.put(mock.path, (req, res) => dynamicHandler.handlePut(mock, req, res));
-    app.delete(mock.path, (req, res) => dynamicHandler.handleDelete(mock, req, res));
-    app.patch(mock.path, (req, res) => dynamicHandler.handlePatch(mock, req, res));
-  } else {
-    app[mock.method.toLowerCase()](mock.path, async (req, res) => {
-      const startTime = Date.now();
-      let responseBody;
-      let statusCode;
-      
-      try {
-        await Mock.findByIdAndUpdate(mock._id, {
-          $inc: { accessCount: 1 },
-          lastAccessed: new Date()
-        });
-
-        if (mock.delay > 0) {
-          await new Promise(resolve => setTimeout(resolve, mock.delay));
-        }
-
-        responseBody = mock.response;
-        statusCode = mock.status;
-        res.status(statusCode).json(responseBody);
-      } catch (error) {
-        console.error('Error serving mock:', error);
-        responseBody = { error: 'Internal server error' };
-        statusCode = 500;
-        res.status(statusCode).json(responseBody);
-      } finally {
-        const responseTime = Date.now() - startTime;
-        logRequest(mock, req, res, responseBody, statusCode, responseTime);
+    app[method](mock.path, (req, res) => {
+      switch (mock.method) {
+        case "GET": return dynamicHandler.handleGet(mock, req, res);
+        case "POST": return dynamicHandler.handlePost(mock, req, res);
+        case "PUT": return dynamicHandler.handlePut(mock, req, res);
+        case "DELETE": return dynamicHandler.handleDelete(mock, req, res);
+        case "PATCH": return dynamicHandler.handlePatch(mock, req, res);
       }
     });
+    return; // IMPORTANT: prevent falling into static logic
   }
+
+  // STATIC MOCK HANDLER (your original static code)
+  app[method](mock.path, async (req, res) => {
+    const startTime = Date.now();
+    let responseBody;
+    let statusCode;
+
+    try {
+      await Mock.findByIdAndUpdate(mock._id, {
+        $inc: { accessCount: 1 },
+        lastAccessed: new Date()
+      });
+
+      if (mock.delay > 0) {
+        await new Promise(resolve => setTimeout(resolve, mock.delay));
+      }
+
+      responseBody = mock.response;
+      statusCode = mock.status;
+      res.status(statusCode).json(responseBody);
+    } catch (error) {
+      console.error('Error serving mock:', error);
+      responseBody = { error: 'Internal server error' };
+      statusCode = 500;
+      res.status(statusCode).json(responseBody);
+    } finally {
+      const responseTime = Date.now() - startTime;
+      logRequest(mock, req, res, responseBody, statusCode, responseTime);
+    }
+  });
 }
 
 app.post('/start-mock', async (req, res) => {

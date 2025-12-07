@@ -1,76 +1,74 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mock API Test</title>
+  <title>Students Fetch</title>
+  <style>
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
 </head>
 <body>
-  <h2>Mock API Test Results:</h2>
-  <div id="results" style="font-family:monospace; background:#18181b; color:#fff; padding:1em; border-radius:8px;"></div>
+
+  <h2>Students</h2>
+  <div id="students"></div>
+
+  <div id="toast" class="toast"></div>
 
   <script>
-    // Change this path to match a dynamic mock you have created
-    const baseUrl = 'https://mockflow-backend.onrender.com/mock/placements';
+  function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.innerText = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2500);
+  }
 
-    async function testApi() {
-      const results = [];
-      // GET
-      try {
-        const res = await fetch(baseUrl);
-        const data = await res.json();
-        results.push('GET: ' + JSON.stringify(data, null, 2));
-      } catch (e) {
-        results.push('GET: Error - ' + e.message);
+  async function fetchStudents() {
+    try {
+      const res = await fetch('https://mockflow-backend.onrender.com/mock/students');
+      const data = await res.json();
+
+      const container = document.getElementById('students');
+      container.innerHTML = '';
+
+      let list = [];
+
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (data.students && Array.isArray(data.students)) {
+        list = data.students;
+      } else {
+        showToast('Invalid response format');
+        return;
       }
-      // POST
-      try {
-        const res = await fetch(baseUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: 'Test User', email: 'test@example.com' })
-        });
-        const data = await res.json();
-        results.push('POST: ' + JSON.stringify(data, null, 2));
-      } catch (e) {
-        results.push('POST: Error - ' + e.message);
-      }
-      // PUT
-      try {
-        // For PUT, you may need an ID. We'll try with id=1 as example.
-        const res = await fetch(baseUrl + '?id=1', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: 'Updated User' })
-        });
-        const data = await res.json();
-        results.push('PUT: ' + JSON.stringify(data, null, 2));
-      } catch (e) {
-        results.push('PUT: Error - ' + e.message);
-      }
-      // PATCH
-      try {
-        const res = await fetch(baseUrl + '?id=1', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'patched@example.com' })
-        });
-        const data = await res.json();
-        results.push('PATCH: ' + JSON.stringify(data, null, 2));
-      } catch (e) {
-        results.push('PATCH: Error - ' + e.message);
-      }
-      // DELETE
-      try {
-        const res = await fetch(baseUrl + '?id=1', {
-          method: 'DELETE'
-        });
-        const data = await res.json();
-        results.push('DELETE: ' + JSON.stringify(data, null, 2));
-      } catch (e) {
-        results.push('DELETE: Error - ' + e.message);
-      }
-      document.getElementById('results').textContent = results.join('\n\n');
+
+      list.forEach(s => {
+        const div = document.createElement('div');
+        div.textContent = `${s.name} ${s.email}`;
+        container.appendChild(div);
+      });
+
+      showToast('Students loaded');
+    } catch (error) {
+      console.error(error);
+      showToast('Error fetching data');
     }
-    testApi();
-  </script>
+  }
+
+  fetchStudents();
+</script>
+
+
 </body>
 </html>

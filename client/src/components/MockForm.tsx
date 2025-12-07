@@ -64,7 +64,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
   };
 
   return (
-    <div className="w-full max-w-4xl">
+    <div className="w-full max-w-4xl font-inter">
       <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20">
         <div className="p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
