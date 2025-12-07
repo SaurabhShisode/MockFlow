@@ -196,6 +196,18 @@ app.get('/mocks', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch mocks' });
   }
 });
+app.get('/requests', async (req, res) => {
+  try {
+    const logs = await RequestLog.find({})
+      .sort({ timestamp: -1 })
+      .limit(200);
+
+    res.json(logs);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch request logs' });
+  }
+});
+
 
 app.get('/mocks/:id/requests', async (req, res) => {
   try {
