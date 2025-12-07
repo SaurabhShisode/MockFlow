@@ -1,17 +1,21 @@
 import { useState, useRef } from 'react';
-import Navbar from './components/Navbar';
+import Sidebar from './components/Sidebar';
 import Footer from './components/Footer';
 import MockForm from './components/MockForm';
 import MockList, { MockListRef } from './components/MockList';
+import SidebarRequestLogs from './components/SidebarRequestLogs';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Layers, Activity, Settings2 } from 'lucide-react';
+
+type Page = 'home' | 'create' | 'mocks' | 'logs' | 'settings';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'create' | 'list'>('create');
+  const [activePage, setActivePage] = useState<Page>('home');
+
   const mockListRef = useRef<MockListRef | null>(null);
 
   const handleMockCreated = () => {
-
     if (mockListRef.current) {
       mockListRef.current.fetchMocks();
     }
@@ -19,80 +23,93 @@ function App() {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-950 to-black text-white ">
-        <Navbar />
-        <div className="flex-col items-center justify-between p-4 pt-24 animate-fadeIn">
+      <div className="min-h-screen flex bg-gray-950 text-white">
+        <Sidebar activePage={activePage} setActivePage={setActivePage} />
 
-        <main className="mt-10 flex flex-col items-center justify-center text-center w-full">
-          <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight text-white drop-shadow-xl font-raleway">
-            Instant, Effortless API Mocking
-          </h1>
+        <main className="flex-1 p-10 overflow-y-auto">
+          {activePage === 'home' && (
+            <div className="max-w-4xl mx-auto text-center mt-28">
+              <h1 className="text-5xl font-bold mb-6 text-indigo-400 font-inter">
+                Build, Test and Mock APIs Instantly
+              </h1>
 
-          <p className="text-lg md:text-xl text-white max-w-2xl mb-12 font-inter">
-            Stop waiting for backend development. Create, customize, and use mock API endpoints in seconds, right from your browser. No installs, no setup, just pure productivity.
-          </p>
+              <p className="text-gray-300 text-lg max-w-2xl mx-auto mb-10 font-inter">
+                MockFlow is a powerful tool that lets you create fully functional API endpoints
+                within seconds. Speed up your frontend development by simulating backend responses
+                with zero setup.
+              </p>
 
-          <div className="w-full max-w-3xl mb-8 font-inter">
-            <div className="flex bg-white/5 backdrop-blur-md rounded-xl p-1">
+              <div className="grid md:grid-cols-3 gap-6 text-left mt-12 font-inter">
+                <div className="bg-white/5 p-6 rounded-xl">
+                  <div className="mb-4">
+                    <Layers className="w-10 h-10 text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-indigo-300 mb-2">Create Mocks Fast</h3>
+                  <p className="text-gray-400">Define methods, paths, responses and simulate backend behavior instantly.</p>
+                </div>
+
+                <div className="bg-white/5 p-6 rounded-xl">
+                  <div className="mb-4">
+                    <Activity className="w-10 h-10 text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-indigo-300 mb-2">Monitor Requests</h3>
+                  <p className="text-gray-400">Track every request with timestamps, bodies, headers, and replay options.</p>
+                </div>
+
+                <div className="bg-white/5 p-6 rounded-xl">
+                  <div className="mb-4">
+                    <Settings2 className="w-10 h-10 text-indigo-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-indigo-300 mb-2">Dynamic and Static APIs</h3>
+                  <p className="text-gray-400">Support for CRUD-ready dynamic APIs and simple static mocks.</p>
+                </div>
+              </div>
+
               <button
-                onClick={() => setActiveTab('create')}
-                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                  activeTab === 'create'
-                    ? 'bg-indigo-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
+                onClick={() => setActivePage('create')}
+                className="mt-10 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition shadow-lg text-lg font-inter"
               >
-                Create Mock
-              </button>
-              <button
-                onClick={() => setActiveTab('list')}
-                className={`flex-1 py-3 px-6 rounded-lg font-medium transition-all ${
-                  activeTab === 'list'
-                    ? 'bg-indigo-600 text-white shadow-lg'
-                    : 'text-gray-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                Your Mocks
+                Start Creating Mocks
               </button>
             </div>
-          </div>
+          )}
 
-         
-          <div className="w-full max-w-3xl">
-            {activeTab === 'create' ? (
-              <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 shadow-xl">
-                <MockForm onMockCreated={handleMockCreated} />
-              </div>
-            ) : (
+          {activePage === 'create' && (
+            <div className="max-w-7xl mx-auto bg-white/5 p-8 rounded-2xl shadow-xl">
+              <h1 className="text-4xl font-bold mb-6 text-indigo-400">Create a Mock API</h1>
+              <p className="text-gray-300 mb-8">
+                Configure your endpoint, choose a method, set a response, and start using your mock instantly.
+              </p>
+              <MockForm onMockCreated={handleMockCreated} />
+            </div>
+          )}
+
+          {activePage === 'mocks' && (
+            <div className="max-w-5xl mx-auto">
+              <h1 className="text-4xl font-bold mb-6 text-indigo-400">Your Mock Endpoints</h1>
               <MockList ref={mockListRef} />
-            )}
-          </div>
-
-          <div className="mt-20 text-left max-w-6xl w-full font-grotesk">
-            <h2 className="text-3xl md:text-4xl font-bold mb-10 text-center text-indigo-400">
-              How It Works
-            </h2>
-            <div className="grid md:grid-cols-3 gap-8 text-center font-poppins">
-              <div className="bg-gradient-to-tr from-gray-800 to-gray-700/60 p-6 rounded-2xl shadow-md hover:scale-105 transform transition duration-300">
-                <h3 className="text-xl font-semibold mb-3 text-indigo-400">1. Define Your Mock</h3>
-                <p className="text-gray-300">Fill in the endpoint path, select the HTTP method, status code, and optional delay. Paste your desired JSON response.</p>
-              </div>
-              <div className="bg-gradient-to-tr from-gray-800 to-indigo-800/60 p-6 rounded-2xl shadow-md hover:scale-105 transform transition duration-300">
-                <h3 className="text-xl font-semibold mb-3 text-indigo-400">2. Start the Server</h3>
-                <p className="text-gray-300">Click "Start Mock Server." We instantly create a live, accessible endpoint based on your configuration.</p>
-              </div>
-              <div className="bg-gradient-to-tr from-gray-800 to-purple-800/60 p-6 rounded-2xl shadow-md hover:scale-105 transform transition duration-300">
-                <h3 className="text-xl font-semibold mb-3 text-indigo-400">3. Integrate and Test</h3>
-                <p className="text-gray-300">Copy the provided URL or CURL command and use it in your frontend application for testing and development.</p>
-              </div>
             </div>
-          </div>
-        </main>
-        </div>
+          )}
 
-        <Footer />
+          {activePage === 'logs' && (
+            <div className="max-w-5xl mx-auto">
+              <h1 className="text-4xl font-bold mb-6 text-indigo-400">Request Logs</h1>
+              <SidebarRequestLogs />
+            </div>
+          )}
+
+          {activePage === 'settings' && (
+            <div className="max-w-4xl mx-auto bg-white/5 p-8 rounded-2xl shadow-xl">
+              <h1 className="text-4xl font-bold mb-6 text-indigo-400">Settings</h1>
+              <p className="text-gray-300">
+                Settings page placeholder. Add user profile, preferences or billing here.
+              </p>
+            </div>
+          )}
+        </main>
       </div>
 
+      <Footer />
       <ToastContainer position="bottom-right" autoClose={4000} hideProgressBar={false} />
     </>
   );
