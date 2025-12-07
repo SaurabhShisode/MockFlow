@@ -4,18 +4,73 @@
   <title>Mock API Test</title>
 </head>
 <body>
-  <h2>Mock API Response:</h2>
-  <pre id="result">Loading...</pre>
+  <h2>Mock API Test Results:</h2>
+  <div id="results" style="font-family:monospace; background:#18181b; color:#fff; padding:1em; border-radius:8px;"></div>
 
   <script>
-    fetch('https://mockflow-backend.onrender.com/mock/user')
-      .then(response => response.json())
-      .then(data => {
-        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-      })
-      .catch(error => {
-        document.getElementById('result').textContent = 'Error: ' + error.message;
-      });
+    // Change this path to match a dynamic mock you have created
+    const baseUrl = 'https://mockflow-backend.onrender.com/mock/placements';
+
+    async function testApi() {
+      const results = [];
+      // GET
+      try {
+        const res = await fetch(baseUrl);
+        const data = await res.json();
+        results.push('GET: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        results.push('GET: Error - ' + e.message);
+      }
+      // POST
+      try {
+        const res = await fetch(baseUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Test User', email: 'test@example.com' })
+        });
+        const data = await res.json();
+        results.push('POST: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        results.push('POST: Error - ' + e.message);
+      }
+      // PUT
+      try {
+        // For PUT, you may need an ID. We'll try with id=1 as example.
+        const res = await fetch(baseUrl + '?id=1', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: 'Updated User' })
+        });
+        const data = await res.json();
+        results.push('PUT: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        results.push('PUT: Error - ' + e.message);
+      }
+      // PATCH
+      try {
+        const res = await fetch(baseUrl + '?id=1', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'patched@example.com' })
+        });
+        const data = await res.json();
+        results.push('PATCH: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        results.push('PATCH: Error - ' + e.message);
+      }
+      // DELETE
+      try {
+        const res = await fetch(baseUrl + '?id=1', {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        results.push('DELETE: ' + JSON.stringify(data, null, 2));
+      } catch (e) {
+        results.push('DELETE: Error - ' + e.message);
+      }
+      document.getElementById('results').textContent = results.join('\n\n');
+    }
+    testApi();
   </script>
 </body>
 </html>
