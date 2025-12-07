@@ -17,7 +17,7 @@ interface RequestLog {
 }
 
 interface RequestHistoryProps {
-  mockId: string;
+  mockId?: string;
 }
 
 const RequestHistory = ({ mockId }: RequestHistoryProps) => {
@@ -27,18 +27,29 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   const [replayingRequest, setReplayingRequest] = useState<string | null>(null);
 
   const fetchRequests = async () => {
+    if (!mockId && !window.location.pathname) {
+      setRequests([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=50`);
+      let url: string;
+      if (mockId) {
+        url = `https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=50`;
+      } else {
+        url = `https://mockflow-backend.onrender.com/requests?limit=100`;
+      }
+
+      const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        console.log('Fetched requests:', data);
         setRequests(data);
       } else {
         toast.error('Failed to fetch request history');
       }
     } catch (error) {
-      console.error('Error fetching requests:', error);
       toast.error('Error fetching request history');
     } finally {
       setLoading(false);
@@ -49,12 +60,14 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
     setReplayingRequest(request._id);
     try {
       const url = `https://mockflow-backend.onrender.com${request.path}`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...request.headers
+      };
+
       const options: RequestInit = {
         method: request.method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...request.headers
-        }
+        headers
       };
 
       if (request.requestBody && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
@@ -62,10 +75,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
       }
 
       const response = await fetch(url, options);
-      const responseData = await response.text();
-      
       toast.success(`Request replayed! Status: ${response.status}`);
-      console.log('Replay Response:', responseData);
     } catch (error) {
       toast.error('Failed to replay request');
     } finally {
@@ -76,9 +86,10 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   const generateCurlCommand = (request: RequestLog) => {
     const url = `https://mockflow-backend.onrender.com${request.path}`;
     let command = `curl -X ${request.method} "${url}"`;
-    
-    Object.entries(request.headers).forEach(([key, value]) => {
-      if (key.toLowerCase() !== 'content-length' && key.toLowerCase() !== 'host') {
+
+    Object.entries(request.headers || {}).forEach(([key, value]) => {
+      const lower = key.toLowerCase();
+      if (lower !== 'content-length' && lower !== 'host') {
         command += ` -H "${key}: ${value}"`;
       }
     });
@@ -92,36 +103,6 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
-  };
-
-  const truncateBody = (body: any, maxLength: number = 100) => {
-    if (!body) return 'No body';
-    try {
-      const str = typeof body === 'string' ? body : JSON.stringify(body);
-      return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
-    } catch (error) {
-      return 'Invalid body data';
-    }
-  };
-
-  const getStatusColor = (status: number) => {
-    if (status >= 200 && status < 300) return 'text-green-400';
-    if (status >= 400 && status < 500) return 'text-yellow-400';
-    return 'text-red-400';
-  };
-
-  const safeJsonStringify = (obj: any) => {
-    try {
-      return JSON.stringify(obj, null, 2);
-    } catch (error) {
-      console.error('Error stringifying object:', error);
-      return 'Error displaying data';
-    }
-  };
-
-  const handleViewDetails = (requestId: string) => {
-    console.log('Toggling expanded request:', requestId);
-    setExpandedRequest(expandedRequest === requestId ? null : requestId);
   };
 
   useEffect(() => {
@@ -140,7 +121,9 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-white">Request History</h3>
+        <h3 className="text-lg font-semibold text-white">
+          {mockId ? 'Request Logs for this Mock' : 'All Request Logs'}
+        </h3>
         <button
           onClick={fetchRequests}
           disabled={loading}
@@ -152,12 +135,11 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
       {requests.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-400">No requests recorded yet.</p>
-          <p className="text-gray-500 text-sm mt-2">Make a request to this endpoint to see the history.</p>
+          <p className="text-gray-400">No request logs recorded yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {requests.map((request) => (
+          {requests.map(request => (
             <div
               key={request._id}
               className="bg-white/5 rounded-lg border border-white/10 overflow-hidden"
@@ -165,104 +147,84 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
               <div className="p-4">
                 <div className="flex justify-between items-start">
                   <div className="flex items-center space-x-3">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      request.method === 'GET' ? 'bg-green-500/20 text-green-400' :
-                      request.method === 'POST' ? 'bg-blue-500/20 text-blue-400' :
-                      request.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400' :
-                      request.method === 'DELETE' ? 'bg-red-500/20 text-red-400' :
-                      'bg-purple-500/20 text-purple-400'
-                    }`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${
+                        request.method === 'GET'
+                          ? 'bg-green-500/20 text-green-400'
+                          : request.method === 'POST'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : request.method === 'PUT'
+                          ? 'bg-yellow-500/20 text-yellow-400'
+                          : request.method === 'DELETE'
+                          ? 'bg-red-500/20 text-red-400'
+                          : 'bg-purple-500/20 text-purple-400'
+                      }`}
+                    >
                       {request.method}
                     </span>
-                    <span className={`px-2 py-1 rounded text-xs ${getStatusColor(request.statusCode)}`}>
+
+                    <span
+                      className={`px-2 py-1 rounded text-xs ${
+                        request.statusCode >= 200 && request.statusCode < 300
+                          ? 'text-green-400'
+                          : request.statusCode >= 400 && request.statusCode < 500
+                          ? 'text-yellow-400'
+                          : 'text-red-400'
+                      }`}
+                    >
                       {request.statusCode}
                     </span>
-                    <span className="text-gray-300 text-sm">{formatTimestamp(request.timestamp)}</span>
-                    <span className="text-gray-400 text-xs">{request.responseTime}ms</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleViewDetails(request._id)}
-                      className="px-2 py-1 bg-gray-600/20 text-gray-300 rounded text-xs hover:bg-gray-600/30 transition-colors"
-                    >
-                      {expandedRequest === request._id ? 'Hide Details' : 'View Details'}
-                    </button>
-                    <button
-                      onClick={() => replayRequest(request)}
-                      disabled={replayingRequest === request._id}
-                      className="px-2 py-1 bg-indigo-600/20 text-indigo-400 rounded text-xs hover:bg-indigo-600/30 transition-colors disabled:opacity-50 flex items-center"
-                    >
-                      {replayingRequest === request._id ? (
-                        <BouncingDotsLoader size="sm" color="text-indigo-400" />
-                      ) : (
-                        'Replay'
-                      )}
-                    </button>
-                  </div>
-                </div>
 
-                <div className="mt-3 text-sm text-gray-300">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <span className="text-gray-400">Path:</span> {request.path}
-                    </div>
-                    <div>
-                      <span className="text-gray-400">IP:</span> {request.clientIP || 'Unknown'}
-                    </div>
-                    <div>
-                      <span className="text-gray-400">Body:</span> {truncateBody(request.requestBody)}
-                    </div>
+                    <span className="text-gray-300 text-sm">{formatTimestamp(request.timestamp)}</span>
                   </div>
+
+                  <button
+                    onClick={() =>
+                      setExpandedRequest(expandedRequest === request._id ? null : request._id)
+                    }
+                    className="px-2 py-1 bg-gray-600/20 text-gray-300 rounded text-xs hover:bg-gray-600/30 transition"
+                  >
+                    {expandedRequest === request._id ? 'Hide' : 'Details'}
+                  </button>
                 </div>
 
                 {expandedRequest === request._id && (
                   <div className="mt-4 space-y-4 border-t border-white/10 pt-4">
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Headers</h4>
-                      <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
-                        {safeJsonStringify(request.headers)}
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
+                        {JSON.stringify(request.headers, null, 2)}
                       </pre>
                     </div>
 
-                    {request.queryParams && Object.keys(request.queryParams).length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-medium text-white mb-2">Query Parameters</h4>
-                        <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
-                          {safeJsonStringify(request.queryParams)}
-                        </pre>
-                      </div>
-                    )}
-
-                    {request.requestBody && (
-                      <div>
-                        <h4 className="text-sm font-medium text-white mb-2">Request Body</h4>
-                        <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
-                          {safeJsonStringify(request.requestBody)}
-                        </pre>
-                      </div>
-                    )}
+                    <div>
+                      <h4 className="text-sm font-medium text-white mb-2">Request Body</h4>
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
+                        {JSON.stringify(request.requestBody, null, 2)}
+                      </pre>
+                    </div>
 
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Response Body</h4>
-                      <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64">
-                        {safeJsonStringify(request.responseBody)}
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
+                        {JSON.stringify(request.responseBody, null, 2)}
                       </pre>
                     </div>
 
                     <div>
-                      <h4 className="text-sm font-medium text-white mb-2">CURL Command</h4>
-                      <div className="flex items-center space-x-2">
-                        <pre className="custom-scrollbar bg-black/30 p-3 rounded text-xs text-gray-300 overflow-x-auto max-h-64 flex-1">
-                          {generateCurlCommand(request)}
-                        </pre>
-                        <button
-                          onClick={() => navigator.clipboard.writeText(generateCurlCommand(request))}
-                          className="px-2 py-1 bg-purple-600/20 text-purple-400 rounded text-xs hover:bg-purple-600/30 transition-colors"
-                        >
-                          Copy
-                        </button>
-                      </div>
+                      <h4 className="text-sm font-medium text-white mb-2">CURL</h4>
+                      <pre className="bg-black/30 p-3 rounded text-xs text-gray-300">
+                        {generateCurlCommand(request)}
+                      </pre>
                     </div>
+
+                    <button
+                      onClick={() => replayRequest(request)}
+                      disabled={replayingRequest === request._id}
+                      className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition disabled:opacity-50"
+                    >
+                      Replay Request
+                    </button>
                   </div>
                 )}
               </div>
@@ -274,4 +236,4 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   );
 };
 
-export default RequestHistory; 
+export default RequestHistory;

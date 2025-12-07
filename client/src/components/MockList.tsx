@@ -20,7 +20,12 @@ export interface MockListRef {
   fetchMocks: () => void;
 }
 
-const MockList = forwardRef<MockListRef>((_, ref) => {
+interface MockListProps {
+  onSelectMock?: (id: string | null) => void;
+}
+
+const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
+  const { onSelectMock } = props;
   const [mocks, setMocks] = useState<Mock[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
@@ -51,9 +56,9 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
     setDeletingIds(prev => new Set(prev).add(id));
     try {
       const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${id}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       });
-      
+
       if (response.ok) {
         toast.success('Mock deleted successfully');
         fetchMocks();
@@ -88,7 +93,11 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
   };
 
   const toggleExpanded = (mockId: string) => {
-    setExpandedMock(expandedMock === mockId ? null : mockId);
+    const newExpanded = expandedMock === mockId ? null : mockId;
+    setExpandedMock(newExpanded);
+    if (onSelectMock) {
+      onSelectMock(newExpanded);
+    }
   };
 
   useEffect(() => {
@@ -137,7 +146,7 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
             </div>
           ) : (
             <div className="space-y-4">
-              {mocks.map((mock) => (
+              {mocks.map(mock => (
                 <div
                   key={mock._id}
                   className="bg-white/5 rounded-lg border border-white/10 overflow-hidden"
@@ -145,26 +154,36 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                   <div className="p-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="flex items-center space-x-3">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${
-                          mock.method === 'GET' ? 'bg-green-500/20 text-green-400' :
-                          mock.method === 'POST' ? 'bg-blue-500/20 text-blue-400' :
-                          mock.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400' :
-                          mock.method === 'DELETE' ? 'bg-red-500/20 text-red-400' :
-                          'bg-purple-500/20 text-purple-400'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            mock.method === 'GET'
+                              ? 'bg-green-500/20 text-green-400'
+                              : mock.method === 'POST'
+                              ? 'bg-blue-500/20 text-blue-400'
+                              : mock.method === 'PUT'
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : mock.method === 'DELETE'
+                              ? 'bg-red-500/20 text-red-400'
+                              : 'bg-purple-500/20 text-purple-400'
+                          }`}
+                        >
                           {mock.method}
                         </span>
                         <span className="text-white font-mono text-sm">{mock.path}</span>
                         {mock.isDynamic && (
-                          <span className="ml-2 px-2 py-1 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30  tracking-wide">
+                          <span className="ml-2 px-2 py-1 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 tracking-wide">
                             Dynamic
                           </span>
                         )}
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          mock.status >= 200 && mock.status < 300 ? 'bg-green-500/20 text-green-400' :
-                          mock.status >= 400 && mock.status < 500 ? 'bg-yellow-500/20 text-yellow-400' :
-                          'bg-red-500/20 text-red-400'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded text-xs ${
+                            mock.status >= 200 && mock.status < 300
+                              ? 'bg-green-500/20 text-green-400'
+                              : mock.status >= 400 && mock.status < 500
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
                           {mock.status}
                         </span>
                       </div>
@@ -173,7 +192,7 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                           onClick={() => toggleExpanded(mock._id)}
                           className="px-3 py-1 bg-gray-600/20 text-gray-300 rounded text-sm hover:bg-gray-600/30 transition-colors"
                         >
-                          {expandedMock === mock._id ? 'Hide History' : 'Request History'}
+                          {expandedMock === mock._id ? 'Hide Logs' : 'Show Logs'}
                         </button>
                         <button
                           onClick={() => deleteMock(mock._id)}
@@ -185,7 +204,12 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                             <BouncingDotsLoader size="sm" color="text-red-400" />
                           ) : (
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
                             </svg>
                           )}
                         </button>
@@ -200,7 +224,8 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
                         <span className="text-gray-400">Accesses:</span> {mock.accessCount}
                       </div>
                       <div>
-                        <span className="text-gray-400">Created:</span> {new Date(mock.createdAt).toLocaleDateString()}
+                        <span className="text-gray-400">Created:</span>{' '}
+                        {new Date(mock.createdAt).toLocaleDateString()}
                       </div>
                     </div>
 
@@ -221,9 +246,7 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
 
                     {expandedMock === mock._id && (
                       <div className="mt-6 border-t border-white/10 pt-6">
-                        <RequestHistory 
-                          mockId={mock._id}
-                        />
+                        <RequestHistory mockId={mock._id} />
                       </div>
                     )}
                   </div>
@@ -237,4 +260,4 @@ const MockList = forwardRef<MockListRef>((_, ref) => {
   );
 });
 
-export default MockList; 
+export default MockList;

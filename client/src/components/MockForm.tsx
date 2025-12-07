@@ -1,38 +1,51 @@
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
+import {
+  Server,
+  UploadCloud,
+  Hash,
+  Clock,
+  FileJson,
+  Database,
+  ClipboardCopy,
+  Link as LinkIcon,
+  ChevronDown,
+  Check
+} from 'lucide-react';
 
 interface MockFormProps {
   onMockCreated?: () => void;
 }
 
+const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+
 const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [path, setPath] = useState('/mock/user');
   const [method, setMethod] = useState('GET');
   const [status, setStatus] = useState(200);
-  const [response, setResponse] = useState('{\n  "message": "Hello, world!"\n}');
   const [delay, setDelay] = useState(0);
+  const [response, setResponse] = useState('{\n  "message": "Hello, world!"\n}');
+  const [isDynamic, setIsDynamic] = useState(false);
   const [curlCommand, setCurlCommand] = useState('');
   const [mockUrl, setMockUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [isDynamic, setIsDynamic] = useState(false);
+  const [methodOpen, setMethodOpen] = useState(false);
 
   const handleStartMocking = async () => {
     setIsCreating(true);
     try {
       const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           path,
           method,
           status: Number(status),
           response: JSON.parse(response),
           delay: Number(delay),
-          isDynamic: isDynamic
-        }),
+          isDynamic
+        })
       });
 
       const text = await res.text();
@@ -41,163 +54,240 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
       generateCurlCommand(method, fullUrl, response);
 
       if (!res.ok) {
-        toast.error(`Error: ${text}`);
+        toast.error(text || 'Failed to create mock');
       } else {
-        toast.success(text);
-        if (onMockCreated) {
-          onMockCreated();
-        }
+        toast.success(text || 'Mock created');
+        if (onMockCreated) onMockCreated();
       }
-    } catch (error: any) {
-      toast.error(`Failed to start mock: ${error.message || error}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to create mock');
     } finally {
       setIsCreating(false);
     }
   };
 
-  const generateCurlCommand = (method: string, url: string, body: string) => {
-    let command = `curl -X ${method} "${url}"`;
-    if (['POST', 'PUT', 'PATCH'].includes(method)) {
-      command += ` -H "Content-Type: application/json" -d '${body}'`;
+  const generateCurlCommand = (m: string, url: string, body: string) => {
+    let cmd = `curl -X ${m} "${url}"`;
+    if (['POST', 'PUT', 'PATCH'].includes(m)) {
+      cmd += ` -H "Content-Type: application/json" -d '${body}'`;
     }
-    setCurlCommand(command);
+    setCurlCommand(cmd);
+  };
+
+  const handleMethodSelect = (value: string) => {
+    setMethod(value);
+    setMethodOpen(false);
   };
 
   return (
-    <div className="w-full max-w-4xl font-inter">
-      <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-lg border border-white/20">
-        <div className="p-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Endpoint Path</label>
+    <div className="w-full font-inter mt-8">
+      <div className="max-w-6xl mx-auto rounded-2xl bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-8 space-y-10">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+              <Server className="w-4 h-4 text-indigo-400" />
+              Endpoint Path
+            </label>
+            <div className="rounded-xl bg-black/20 border border-white/10 px-4 h-12 flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition">
               <input
                 type="text"
-                className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
+                className="w-full bg-transparent outline-none text-sm text-white placeholder:text-gray-500"
                 value={path}
-                onChange={(e) => setPath(e.target.value)}
+                onChange={e => setPath(e.target.value)}
                 disabled={isCreating}
+                placeholder="/mock/users"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">HTTP Method</label>
-              <select
-                className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
-                disabled={isCreating}
-              >
-                <option className="bg-gray-900">GET</option>
-                <option className="bg-gray-900">POST</option>
-                <option className="bg-gray-900">PUT</option>
-                <option className="bg-gray-900">DELETE</option>
-                <option className="bg-gray-900">PATCH</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-1">Status Code</label>
-              <input
-                type="number"
-                className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
-                value={status}
-                onChange={(e) => setStatus(Number(e.target.value))}
-                disabled={isCreating}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-1">Delay (ms)</label>
-              <input
-                type="number"
-                className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm h-10 px-3"
-                value={delay}
-                onChange={(e) => setDelay(Number(e.target.value))}
-                disabled={isCreating}
-              />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-300 mb-1">JSON Response</label>
-              <textarea
-                className="mt-1 block w-full bg-white/10 text-white border border-white/20 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-3"
-                rows={10}
-                value={response}
-                onChange={(e) => setResponse(e.target.value)}
-                disabled={isCreating}
-              ></textarea>
-            </div>
-
-            <div className="md:col-span-2 flex items-center mt-2">
-              <input
-                id="isDynamic"
-                type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded mr-2"
-                checked={isDynamic}
-                onChange={e => setIsDynamic(e.target.checked)}
-                disabled={isCreating}
-              />
-              <label htmlFor="isDynamic" className="text-sm text-gray-300 select-none cursor-pointer">
-                Enable CRUD (dynamic) mock (GET, POST, PUT, DELETE, PATCH)
-              </label>
             </div>
           </div>
 
-          <button
-            onClick={handleStartMocking}
-            disabled={isCreating}
-            className="mt-8 w-full inline-flex justify-center items-center rounded-md border border-transparent bg-indigo-600 py-3 px-4 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isCreating ? (
-              <>
-                <BouncingDotsLoader size="sm" color="text-white" />
-                <span className="ml-2">Creating Mock...</span>
-              </>
-            ) : (
-              'Start Mock Server'
-            )}
-          </button>
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+              <UploadCloud className="w-4 h-4 text-indigo-400" />
+              HTTP Method
+            </label>
 
-          {mockUrl && (
-            <div className="mt-6 p-4 bg-black/30 rounded-lg">
-              <label className="block text-sm font-medium text-gray-300">Your mock endpoint is live:</label>
-              <div className="flex items-center mt-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={mockUrl}
-                  className="w-full bg-transparent text-white/80 border-none p-0 focus:ring-0"
-                />
-                <button
-                  onClick={() => navigator.clipboard.writeText(mockUrl)}
-                  className="ml-2 text-sm text-indigo-400 hover:text-indigo-300"
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
-          )}
+            <div
+              className="relative rounded-xl bg-black/20 border border-white/10 h-12 flex items-center px-4 cursor-pointer select-none transition"
+              onClick={() => setMethodOpen(o => !o)}
+            >
+              <span className="flex items-center gap-2 text-sm text-white">
+                <span className="inline-flex items-center justify-center rounded-md bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-300 font-mono">
+                  {method}
+                </span>
+                <span className="text-gray-300">Request</span>
+              </span>
 
-          {curlCommand && (
-            <div className="mt-4 p-4 bg-black/30 rounded-lg">
-              <label className="block text-sm font-medium text-gray-300">CURL Command:</label>
-              <div className="flex items-center mt-2">
-                <input
-                  type="text"
-                  readOnly
-                  value={curlCommand}
-                  className="w-full bg-transparent text-white/80 border-none p-0 focus:ring-0"
-                />
-                <button
-                  onClick={() => navigator.clipboard.writeText(curlCommand)}
-                  className="ml-2 text-sm text-indigo-400 hover:text-indigo-300"
-                >
-                  Copy
-                </button>
-              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 ml-auto transition-transform ${methodOpen ? 'rotate-180' : ''}`}
+              />
+
+              {methodOpen && (
+                <div className="absolute left-0 top-12 w-full rounded-xl bg-gray-950 border border-white/10 shadow-2xl overflow-hidden z-20">
+
+                  {['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].map(m => (
+                    <button
+                      key={m}
+                      type="button"
+                      onMouseDown={() => {
+                        setMethod(m);
+                        setMethodOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-white/5 ${m === method ? 'text-indigo-300 bg-white/5' : 'text-gray-200'
+                        }`}
+                    >
+                      <span className="font-mono">{m}</span>
+                      {m === method && <Check className="w-4 h-4 text-indigo-300" />}
+                    </button>
+                  ))}
+
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+              <Hash className="w-4 h-4 text-indigo-400" />
+              Status Code
+            </label>
+            <div className="rounded-xl bg-black/20 border border-white/10 px-4 h-12 flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition">
+              <input
+                type="number"
+                className="w-full bg-transparent outline-none text-sm text-white appearance-none no-spinner"
+                value={status}
+                onChange={e => setStatus(Number(e.target.value))}
+                disabled={isCreating}
+                min={100}
+                max={599}
+              />
+
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+              <Clock className="w-4 h-4 text-indigo-400" />
+              Delay (ms)
+            </label>
+            <div className="rounded-xl bg-black/20 border border-white/10 px-4 h-12 flex items-center focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition">
+              <input
+                type="number"
+                className="w-full bg-transparent outline-none text-sm text-white noppearance-none no-spinner"
+                value={delay}
+                onChange={e => setDelay(Number(e.target.value))}
+                disabled={isCreating}
+                min={0}
+              />
+            </div>
+          </div>
         </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+            <FileJson className="w-4 h-4 text-indigo-400" />
+            JSON Response
+          </label>
+          <div className="rounded-2xl bg-black/30 border border-white/10 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition">
+            <textarea
+              className="w-full bg-transparent outline-none text-sm text-white p-4 font-mono resize-none h-60"
+              value={response}
+              onChange={e => setResponse(e.target.value)}
+              disabled={isCreating}
+            />
+          </div>
+        </div>
+
+        <div
+          className="relative group inline-flex items-center gap-3 rounded-xl bg-black/20 border border-white/10 px-4 py-3 cursor-pointer hover:bg-black/30 transition"
+          onClick={() => !isCreating && setIsDynamic(v => !v)}
+        >
+
+          <div
+            className={`w-5 h-5 rounded-md border flex items-center justify-center ${isDynamic ? 'border-indigo-500 bg-indigo-600/80' : 'border-gray-600 bg-black/40'
+              }`}
+          >
+            {isDynamic && <Check className="w-3 h-3 text-white" />}
+          </div>
+
+          <div className="flex items-center gap-2 text-sm text-gray-300">
+            <Database className="w-4 h-4 text-indigo-400" />
+            <span>Enable CRUD dynamic mock</span>
+          </div>
+
+          {/* Tooltip */}
+          <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-64 p-3 rounded-lg bg-gray-900/90 text-gray-200 text-xs border border-white/10 shadow-xl backdrop-blur-lg z-20">
+            <p className="text-sm font-inter">
+              When enabled, this endpoint behaves like a dynamic mock.
+              Supports GET, POST, PUT, DELETE, and PATCH automatically with in-memory data.
+            </p>
+          </div>
+        </div>
+
+
+        <button
+          onClick={handleStartMocking}
+          disabled={isCreating}
+          className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 flex items-center justify-center gap-3 text-sm tracking-wide transition disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {isCreating ? (
+            <>
+              <BouncingDotsLoader size="sm" color="text-white" />
+              <span>Creating mock</span>
+            </>
+          ) : (
+            'Start Mock Server'
+          )}
+        </button>
+
+        {mockUrl && (
+          <div className="rounded-2xl bg-black/30 border border-white/10 p-4 space-y-2">
+            <div className="text-xs font-semibold text-gray-300 uppercase flex items-center gap-2">
+              <LinkIcon className="w-4 h-4 text-indigo-400" />
+              Your mock endpoint is live
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                readOnly
+                value={mockUrl}
+                className="flex-1 bg-transparent outline-none text-sm text-white/80"
+              />
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(mockUrl)}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-indigo-300"
+              >
+                <ClipboardCopy className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {curlCommand && (
+          <div className="rounded-2xl bg-black/30 border border-white/10 p-4 space-y-2">
+            <div className="text-xs font-semibold text-gray-300 uppercase">
+              CURL Command
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                readOnly
+                value={curlCommand}
+                className="flex-1 bg-transparent outline-none text-xs text-white/80 font-mono"
+              />
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(curlCommand)}
+                className="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-indigo-300"
+              >
+                <ClipboardCopy className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
