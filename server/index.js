@@ -315,6 +315,27 @@ app.get("/logs/paginated", authMiddleware, async (req, res) => {
     res.status(500).json({ message: "Failed to fetch logs" });
   }
 });
+app.delete("/user/delete", authMiddleware, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+
+   
+    await Mock.deleteMany({ userId: uid });
+
+   
+    await RequestLog.deleteMany({ userId: uid });
+
+    
+    if (global.dynamicStores && global.dynamicStores[uid]) {
+      delete global.dynamicStores[uid];
+    }
+
+
+    res.json({ success: true, message: "Account and all data deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete user account" });
+  }
+});
 
 app.get('/logs/recent', async (req, res) => {
   try {
