@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
+import { useAuth } from '../context/AuthContext';
 
 interface LogEntry {
   _id: string;
@@ -8,24 +9,33 @@ interface LogEntry {
   method: string;
   path: string;
   statusCode: number;
-  mockId: string;
-  mockName?: string;
 }
 
 const SidebarRequestLogs = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
-
   const [totalPages, setTotalPages] = useState(1);
 
+  const { token, user } = useAuth();
+
   const fetchLogs = async () => {
+    if (!user || !token) {
+      setLogs([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(
-        `https://mockflow-backend.onrender.com/logs/paginated?page=${page}&limit=${limit}`
+        `https://mockflow-backend.onrender.com/logs/paginated?page=${page}&limit=${limit}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
 
       if (response.ok) {
@@ -44,9 +54,17 @@ const SidebarRequestLogs = () => {
 
   useEffect(() => {
     fetchLogs();
-  }, [page, limit]);
+  }, [page, limit, token, user]);
 
   const formatTimestamp = (ts: string) => new Date(ts).toLocaleString();
+
+  if (!user) {
+    return (
+      <div className="text-center py-10 text-gray-400 font-inter">
+        Sign in to see your mock request logs.
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -60,9 +78,8 @@ const SidebarRequestLogs = () => {
   return (
     <div className="space-y-4 font-inter">
 
+      {/* select limit */}
       <div className="flex justify-between items-center">
-        
-
         <select
           value={limit}
           onChange={e => {
@@ -77,6 +94,7 @@ const SidebarRequestLogs = () => {
         </select>
       </div>
 
+      {/* logs list */}
       {logs.length === 0 ? (
         <p className="text-gray-400 text-center py-6">No logs found.</p>
       ) : (
@@ -86,6 +104,7 @@ const SidebarRequestLogs = () => {
             className="p-3 bg-white/5 rounded border border-white/10 hover:bg-white/10 transition font-inter space-y-3"
           >
             <div className="flex items-center space-x-2 mb-1">
+
               <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                 log.method === 'GET'
                   ? 'bg-green-500/20 text-green-400'
@@ -110,15 +129,14 @@ const SidebarRequestLogs = () => {
             </div>
 
             <p className="text-gray-200 text-sm font-inter truncate">{log.path}</p>
-
             <p className="text-gray-400 text-xs mt-1">{formatTimestamp(log.timestamp)}</p>
           </div>
         ))
       )}
 
-    
+      {/* pagination */}
       <div className="flex justify-center items-center space-x-2 pt-3">
-
+        
         <button
           disabled={page === 1}
           onClick={() => setPage(prev => prev - 1)}
@@ -150,7 +168,6 @@ const SidebarRequestLogs = () => {
         </button>
 
       </div>
-
     </div>
   );
 };

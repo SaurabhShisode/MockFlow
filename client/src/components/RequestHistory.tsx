@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
+import { useAuth } from '../context/AuthContext';
+
+
 const IMPORTANT_HEADERS = [
   'content-type',
   'authorization',
@@ -33,64 +36,69 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   const [loading, setLoading] = useState(true);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
   const [replayingRequest, setReplayingRequest] = useState<string | null>(null);
+  const { token } = useAuth();
 
   const fetchRequests = async () => {
-    if (!mockId && !window.location.pathname) {
-      setRequests([]);
-      setLoading(false);
-      return;
-    }
+  if (!token) {
+    setRequests([]);
+    setLoading(false);
+    return;
+  }
 
-    setLoading(true);
-    try {
-      let url: string;
-      if (mockId) {
-        url = `https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=5`;
-      } else {
-        url = `https://mockflow-backend.onrender.com/requests?limit=5`;
+  setLoading(true);
+  try {
+    const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=50`, {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-
-
-      const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setRequests(data);
-      } else {
-        toast.error('Failed to fetch request history');
-      }
-    } catch (error) {
-      toast.error('Error fetching request history');
-    } finally {
-      setLoading(false);
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setRequests(data);
+    } else {
+      toast.error('Failed to fetch request history');
     }
-  };
+  } catch (error) {
+    toast.error('Error fetching request history');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const replayRequest = async (request: RequestLog) => {
-    setReplayingRequest(request._id);
-    try {
-      const url = `https://mockflow-backend.onrender.com${request.path}`;
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        ...request.headers
-      };
-
-      const options: RequestInit = {
-        method: request.method,
-        headers
-      };
-
-      if (request.requestBody && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
-        options.body = JSON.stringify(request.requestBody);
-      }
-
-      const response = await fetch(url, options);
-      toast.success(`Request replayed! Status: ${response.status}`);
-    } catch (error) {
-      toast.error('Failed to replay request');
-    } finally {
-      setReplayingRequest(null);
+  setReplayingRequest(request._id);
+  try {
+    const url = `https://mockflow-backend.onrender.com${request.path}`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...request.headers
+    };
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
-  };
+
+    const options: RequestInit = {
+      method: request.method,
+      headers
+    };
+
+    if (request.requestBody && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
+      options.body = JSON.stringify(request.requestBody);
+    }
+
+    const response = await fetch(url, options);
+    const responseData = await response.text();
+
+    toast.success(`Request replayed. Status: ${response.status}`);
+    console.log('Replay Response:', responseData);
+  } catch (error) {
+    toast.error('Failed to replay request');
+  } finally {
+    setReplayingRequest(null);
+  }
+};
+
 
 
 

@@ -2,6 +2,7 @@ import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
 import RequestHistory from './RequestHistory';
+import { useAuth } from '../context/AuthContext';
 
 interface Mock {
   _id: string;
@@ -26,6 +27,7 @@ interface MockListProps {
 
 const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
   const { onSelectMock } = props;
+  const { token } = useAuth();
 
   const [mocks, setMocks] = useState<Mock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,49 +38,68 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
   const itemsPerPage = 10;
 
   const fetchMocks = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('https://mockflow-backend.onrender.com/mocks');
-      if (response.ok) {
-        const data = await response.json();
-        setMocks(data);
-      } else {
-        toast.error('Failed to fetch mocks');
+  if (!token) {
+    setMocks([]);
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const response = await fetch('https://mockflow-backend.onrender.com/mocks', {
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-    } catch (error) {
-      toast.error('Error fetching mocks');
-    } finally {
-      setLoading(false);
+    });
+    if (response.ok) {
+      const data = await response.json();
+      setMocks(data);
+    } else {
+      toast.error('Failed to fetch mocks');
     }
-  };
+  } catch (error) {
+    toast.error('Error fetching mocks');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useImperativeHandle(ref, () => ({
     fetchMocks
   }));
 
   const deleteMock = async (id: string) => {
-    setDeletingIds(prev => new Set(prev).add(id));
-    try {
-      const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${id}`, {
-        method: 'DELETE'
-      });
+  if (!token) {
+    toast.error('Please sign in');
+    return;
+  }
 
-      if (response.ok) {
-        toast.success('Mock deleted successfully');
-        fetchMocks();
-      } else {
-        toast.error('Failed to delete mock');
+  setDeletingIds(prev => new Set(prev).add(id));
+  try {
+    const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
       }
-    } catch (error) {
-      toast.error('Error deleting mock');
-    } finally {
-      setDeletingIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(id);
-        return newSet;
-      });
+    });
+
+    if (response.ok) {
+      toast.success('Mock deleted successfully');
+      fetchMocks();
+    } else {
+      toast.error('Failed to delete mock');
     }
-  };
+  } catch (error) {
+    toast.error('Error deleting mock');
+  } finally {
+    setDeletingIds(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(id);
+      return newSet;
+    });
+  }
+};
+
 
   const copyUrl = (mock: Mock) => {
     const url = `https://mockflow-backend.onrender.com${mock.path}`;
@@ -131,7 +152,7 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
             <button
               onClick={fetchMocks}
               disabled={loading}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center font-sm"
             >
               {loading ? (
                 <>

@@ -13,7 +13,7 @@ import {
   ChevronDown,
   Check
 } from 'lucide-react';
-
+import { useAuth } from '../context/AuthContext';
 interface MockFormProps {
   onMockCreated?: () => void;
 }
@@ -31,40 +31,51 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [mockUrl, setMockUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
+  const { token } = useAuth();
+
 
   const handleStartMocking = async () => {
-    setIsCreating(true);
-    try {
-      const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          path,
-          method,
-          status: Number(status),
-          response: JSON.parse(response),
-          delay: Number(delay),
-          isDynamic
-        })
-      });
+  if (!token) {
+    toast.error('Please sign in to create mocks');
+    return;
+  }
 
-      const text = await res.text();
-      const fullUrl = `https://mockflow-backend.onrender.com${path}`;
-      setMockUrl(fullUrl);
-      generateCurlCommand(method, fullUrl, response);
+  setIsCreating(true);
+  try {
+    const res = await fetch('https://mockflow-backend.onrender.com/start-mock', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        path,
+        method,
+        status: Number(status),
+        response: JSON.parse(response),
+        delay: Number(delay),
+        isDynamic
+      })
+    });
 
-      if (!res.ok) {
-        toast.error(text || 'Failed to create mock');
-      } else {
-        toast.success(text || 'Mock created');
-        if (onMockCreated) onMockCreated();
-      }
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to create mock');
-    } finally {
-      setIsCreating(false);
+    const text = await res.text();
+    const fullUrl = `https://mockflow-backend.onrender.com${path}`;
+    setMockUrl(fullUrl);
+    generateCurlCommand(method, fullUrl, response);
+
+    if (!res.ok) {
+      toast.error(text || 'Failed to create mock');
+    } else {
+      toast.success(text || 'Mock created');
+      if (onMockCreated) onMockCreated();
     }
-  };
+  } catch (err: any) {
+    toast.error(err?.message || 'Failed to create mock');
+  } finally {
+    setIsCreating(false);
+  }
+};
+
 
   const generateCurlCommand = (m: string, url: string, body: string) => {
     let cmd = `curl -X ${m} "${url}"`;
@@ -197,31 +208,32 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
           </div>
         </div>
 
-        <div
-          className="relative group inline-flex items-center gap-3 rounded-xl bg-black/20 border border-white/10 px-4 py-3 cursor-pointer hover:bg-black/30 transition"
-          onClick={() => !isCreating && setIsDynamic(v => !v)}
-        >
+        {['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && (
+  <div
+    className="relative group inline-flex items-center gap-3 rounded-xl bg-black/20 border border-white/10 px-4 py-3 cursor-pointer hover:bg-black/30 transition"
+    onClick={() => !isCreating && setIsDynamic(v => !v)}
+  >
+    <div
+      className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+        isDynamic ? 'border-indigo-500 bg-indigo-600/80' : 'border-gray-600 bg-black/40'
+      }`}
+    >
+      {isDynamic && <Check className="w-3 h-3 text-white" />}
+    </div>
 
-          <div
-            className={`w-5 h-5 rounded-md border flex items-center justify-center ${isDynamic ? 'border-indigo-500 bg-indigo-600/80' : 'border-gray-600 bg-black/40'
-              }`}
-          >
-            {isDynamic && <Check className="w-3 h-3 text-white" />}
-          </div>
+    <div className="flex items-center gap-2 text-sm text-gray-300">
+      <Database className="w-4 h-4 text-indigo-400" />
+      <span>Enable CRUD dynamic mock</span>
+    </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-300">
-            <Database className="w-4 h-4 text-indigo-400" />
-            <span>Enable CRUD dynamic mock</span>
-          </div>
-
-          {/* Tooltip */}
-          <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-64 p-3 rounded-lg bg-gray-900/90 text-gray-200 text-xs border border-white/10 shadow-xl backdrop-blur-lg z-20">
-            <p className="text-sm font-inter">
-              When enabled, this endpoint behaves like a dynamic mock.
-              Supports GET, POST, PUT, DELETE, and PATCH automatically with in-memory data.
-            </p>
-          </div>
-        </div>
+    <div className="absolute left-0 top-full mt-2 hidden group-hover:block w-64 p-3 rounded-lg bg-gray-900/90 text-gray-200 text-xs border border-white/10 shadow-xl backdrop-blur-lg z-20">
+      <p className="text-sm font-inter">
+        When enabled, this endpoint behaves like a dynamic mock.
+        Supports GET, POST, PUT, DELETE, and PATCH automatically with in-memory data.
+      </p>
+    </div>
+  </div>
+)}
 
 
         <button
