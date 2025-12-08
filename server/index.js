@@ -292,7 +292,8 @@ app.get('/test-logging/:mockId', async (req, res) => {
 });
 
 
-router.get("/logs/paginated", verifyFirebaseToken, async (req, res) => {
+app.get("/logs/paginated", verifyFirebaseToken, async (req, res) => {
+
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
