@@ -5,6 +5,8 @@ const connectDB = require('./config/database');
 const Mock = require('./models/Mock');
 const RequestLog = require('./models/RequestLog');
 const dynamicHandler = require('./utils/dynamicHandler');
+const authMiddleware = require('./middleware/auth');
+
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -25,7 +27,7 @@ async function loadExistingMocks() {
       registerMockRoute(mock);
     });
     console.log(`Loaded ${mocks.length} existing mocks from database`);
-    
+
     // Initialize dynamic data for existing dynamic mocks
     const dynamicMocks = mocks.filter(mock => mock.isDynamic);
     for (const mock of dynamicMocks) {
@@ -52,6 +54,7 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
 
     const requestLog = new RequestLog({
       mockId: mock._id,
+      userId: mock.userId,
       method: req.method,
       path: req.path,
       headers: req.headers,
@@ -63,17 +66,18 @@ async function logRequest(mock, req, res, responseBody, statusCode, responseTime
       responseTime: responseTime
     });
 
+
     await requestLog.save();
     console.log(`Request logged successfully with ID: ${requestLog._id}`);
 
     const logCount = await RequestLog.countDocuments({ mockId: mock._id });
     console.log(`Total logs for mock ${mock._id}: ${logCount}`);
-    
+
     if (logCount > 50) {
       const oldestLogs = await RequestLog.find({ mockId: mock._id })
         .sort({ timestamp: 1 })
         .limit(logCount - 50);
-      
+
       if (oldestLogs.length > 0) {
         await RequestLog.deleteMany({ _id: { $in: oldestLogs.map(log => log._id) } });
         console.log(`Cleaned up ${oldestLogs.length} old logs for mock ${mock._id}`);
@@ -131,7 +135,7 @@ function registerMockRoute(mock) {
 }
 
 
-app.post('/start-mock', async (req, res) => {
+app.post('/start-mock', authMiddleware, async (req, res) => {
   try {
     const { path, method, status, response, delay, isDynamic } = req.body;
 
@@ -139,13 +143,14 @@ app.post('/start-mock', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const routeKey = `${method}:${path}`;
-    
-    const existingMock = await Mock.findOne({ path, method });
+    const userId = req.user.uid;
+    const routeKey = `${method}:${path}:${userId}`;
+
+    const existingMock = await Mock.findOne({ path, method, userId });
     if (existingMock) {
-      return res.status(409).json({ 
-        error: 'Mock already exists for this route and method',
-        mockId: existingMock._id 
+      return res.status(409).json({
+        error: 'Mock already exists for this route and method for this user',
+        mockId: existingMock._id
       });
     }
 
@@ -155,7 +160,8 @@ app.post('/start-mock', async (req, res) => {
       status: Number(status),
       response: typeof response === 'string' ? JSON.parse(response) : response,
       delay: Number(delay) || 0,
-      isDynamic: !!isDynamic
+      isDynamic: !!isDynamic,
+      userId
     });
 
     await newMock.save();
@@ -163,36 +169,35 @@ app.post('/start-mock', async (req, res) => {
     if (newMock.isDynamic) {
       try {
         await dynamicHandler.initializeData(newMock.path, newMock.response);
-        console.log(`Initialized dynamic data for path ${newMock.path}`);
       } catch (error) {
-        console.error('Error initializing dynamic data:', error);
-        
       }
     }
 
     activeRoutes.set(routeKey, newMock);
     registerMockRoute(newMock);
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: `Mock created: ${method.toUpperCase()} ${path}`,
       mockId: newMock._id
     });
-
   } catch (error) {
     console.error('Error creating mock:', error);
     res.status(500).json({ error: 'Failed to create mock endpoint' });
   }
 });
 
-app.get('/mocks', async (req, res) => {
+
+app.get('/mocks', authMiddleware, async (req, res) => {
   try {
-    const mocks = await Mock.find({}).sort({ createdAt: -1 });
+    const userId = req.user.uid;
+    const mocks = await Mock.find({ userId }).sort({ createdAt: -1 });
     res.json(mocks);
   } catch (error) {
     console.error('Error fetching mocks:', error);
     res.status(500).json({ error: 'Failed to fetch mocks' });
   }
 });
+
 app.get('/requests', async (req, res) => {
   try {
     const logs = await RequestLog.find({})
@@ -206,19 +211,21 @@ app.get('/requests', async (req, res) => {
 });
 
 
-app.get('/mocks/:id/requests', async (req, res) => {
+app.get('/mocks/:id/requests', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { limit = 20 } = req.query;
-    
-    console.log(`Fetching requests for mock ${id} with limit ${limit}`);
-    
-    const requests = await RequestLog.find({ mockId: id })
+    const userId = req.user.uid;
+
+    const mock = await Mock.findOne({ _id: id, userId });
+    if (!mock) {
+      return res.status(404).json({ error: 'Mock not found for this user' });
+    }
+
+    const requests = await RequestLog.find({ mockId: id, userId })
       .sort({ timestamp: -1 })
       .limit(parseInt(limit));
-    
-    console.log(`Found ${requests.length} requests for mock ${id}`);
-    
+
     res.json(requests);
   } catch (error) {
     console.error('Error fetching request logs:', error);
@@ -226,16 +233,19 @@ app.get('/mocks/:id/requests', async (req, res) => {
   }
 });
 
-app.delete('/mocks/:id', async (req, res) => {
+
+app.delete('/mocks/:id', authMiddleware, async (req, res) => {
   try {
-    const mock = await Mock.findByIdAndDelete(req.params.id);
+    const userId = req.user.uid;
+
+    const mock = await Mock.findOneAndDelete({ _id: req.params.id, userId });
     if (!mock) {
-      return res.status(404).json({ error: 'Mock not found' });
+      return res.status(404).json({ error: 'Mock not found for this user' });
     }
 
-    await RequestLog.deleteMany({ mockId: req.params.id });
+    await RequestLog.deleteMany({ mockId: req.params.id, userId });
 
-    const routeKey = `${mock.method}:${mock.path}`;
+    const routeKey = `${mock.method}:${mock.path}:${userId}`;
     activeRoutes.delete(routeKey);
 
     res.json({ message: 'Mock deleted successfully' });
@@ -245,22 +255,23 @@ app.delete('/mocks/:id', async (req, res) => {
   }
 });
 
+
 app.get('/test-logging/:mockId', async (req, res) => {
   try {
     const { mockId } = req.params;
-    
+
     console.log(`Testing logging for mock ${mockId}`);
-    
+
     const mock = await Mock.findById(mockId);
     if (!mock) {
       return res.status(404).json({ error: 'Mock not found' });
     }
-    
+
     const logCount = await RequestLog.countDocuments({ mockId });
     const recentLogs = await RequestLog.find({ mockId })
       .sort({ timestamp: -1 })
       .limit(5);
-    
+
     res.json({
       mockId,
       mockPath: mock.path,
@@ -294,7 +305,7 @@ app.get('/logs/paginated', async (req, res) => {
       .limit(limit)
       .lean();
 
-   
+
     const mockIds = [...new Set(logs.map(log => log.mockId))];
     const mocks = await Mock.find({ _id: { $in: mockIds } }).lean();
 
@@ -328,7 +339,7 @@ app.get('/logs/recent', async (req, res) => {
       .limit(limit)
       .lean();
 
-   
+
     const mockIds = [...new Set(logs.map(log => log.mockId))];
     const mocks = await Mock.find({ _id: { $in: mockIds } })
       .select('_id path method')
@@ -354,7 +365,7 @@ app.get('/logs/recent', async (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'MockFlow Backend is running!',
     activeMocks: activeRoutes.size,
     endpoints: {

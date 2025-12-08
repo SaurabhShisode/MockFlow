@@ -7,6 +7,10 @@ const requestLogSchema = new mongoose.Schema({
     required: true,
     index: true
   },
+  userId: {
+    type: String,
+    index: true
+  },
   timestamp: {
     type: Date,
     default: Date.now,
@@ -52,4 +56,4 @@ const requestLogSchema = new mongoose.Schema({
 
 requestLogSchema.index({ mockId: 1, timestamp: -1 });
 
-module.exports = mongoose.model('RequestLog', requestLogSchema); 
+module.exports = mongoose.model('RequestLog', requestLogSchema);

@@ -41,10 +41,14 @@ const mockSchema = new mongoose.Schema({
   isDynamic: {
     type: Boolean,
     default: false
+  },
+  userId: {
+    type: String,
+    required: true,
+    index: true
   }
 });
 
+mockSchema.index({ path: 1, method: 1, userId: 1 }, { unique: true });
 
-mockSchema.index({ path: 1, method: 1 }, { unique: true });
-
-module.exports = mongoose.model('Mock', mockSchema); 
+module.exports = mongoose.model('Mock', mockSchema);
