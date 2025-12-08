@@ -28,7 +28,7 @@ async function loadExistingMocks() {
     });
     console.log(`Loaded ${mocks.length} existing mocks from database`);
 
-    // Initialize dynamic data for existing dynamic mocks
+   
     const dynamicMocks = mocks.filter(mock => mock.isDynamic);
     for (const mock of dynamicMocks) {
       try {
