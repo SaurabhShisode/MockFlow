@@ -292,7 +292,7 @@ app.get('/test-logging/:mockId', async (req, res) => {
 });
 
 
-app.get("/logs/paginated", verifyFirebaseToken, async (req, res) => {
+app.get("/logs/paginated", authMiddleware, async (req, res) => {
 
   try {
     const page = parseInt(req.query.page) || 1;
