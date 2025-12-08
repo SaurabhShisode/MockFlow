@@ -292,40 +292,26 @@ app.get('/test-logging/:mockId', async (req, res) => {
 });
 
 
-app.get('/logs/paginated', async (req, res) => {
+router.get("/logs/paginated", verifyFirebaseToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const totalLogs = await RequestLog.countDocuments({});
-    const logs = await RequestLog.find({})
+    const userId = req.user.uid; 
+    const logs = await RequestLog.find({ userId })
       .sort({ timestamp: -1 })
       .skip(skip)
-      .limit(limit)
-      .lean();
+      .limit(limit);
 
-
-    const mockIds = [...new Set(logs.map(log => log.mockId))];
-    const mocks = await Mock.find({ _id: { $in: mockIds } }).lean();
-
-    const mockMap = {};
-    mocks.forEach(m => mockMap[m._id] = m);
-
-    const finalLogs = logs.map(log => ({
-      ...log,
-      mockName: mockMap[log.mockId]?.path || 'Unknown Mock',
-      mockMethod: mockMap[log.mockId]?.method || ''
-    }));
+    const totalLogs = await RequestLog.countDocuments({ userId });
 
     res.json({
-      logs: finalLogs,
-      page,
-      totalLogs,
+      logs,
       totalPages: Math.ceil(totalLogs / limit)
     });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch paginated logs' });
+    res.status(500).json({ message: "Failed to fetch logs" });
   }
 });
 
