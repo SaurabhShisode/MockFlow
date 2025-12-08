@@ -129,7 +129,7 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
 
   if (loading) {
     return (
-      <div className="w-full max-w-4xl font-inter">
+      <div className="w-full max-w-5xl font-inter">
         <div className="rounded-xl shadow-lg py-8">
           <div className="flex flex-col items-center justify-center py-12">
             <BouncingDotsLoader size="lg" color="text-indigo-400" />
@@ -185,7 +185,7 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                             {mock.method}
                           </span>
 
-                          <span className="text-white font-mono text-sm">{mock.path}</span>
+                          <span className="text-white font-inter text-sm">{mock.path}</span>
 
                           {mock.isDynamic && (
                             <span className="ml-2 px-2 py-1 rounded text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
