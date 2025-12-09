@@ -9,6 +9,11 @@ interface LogEntry {
   method: string;
   path: string;
   statusCode: number;
+  responseTime?: number;
+  clientIP?: string;
+  requestBody?: any;
+  responseBody?: any;
+  headers?: any;
 }
 
 const SidebarRequestLogs = () => {
@@ -32,9 +37,7 @@ const SidebarRequestLogs = () => {
       const response = await fetch(
         `https://mockflow-backend.onrender.com/logs/paginated?page=${page}&limit=${limit}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         }
       );
 
@@ -58,6 +61,12 @@ const SidebarRequestLogs = () => {
 
   const formatTimestamp = (ts: string) => new Date(ts).toLocaleString();
 
+  const [openDetails, setOpenDetails] = useState<string | null>(null);
+
+  const toggleDetails = (id: string) => {
+    setOpenDetails(openDetails === id ? null : id);
+  };
+
   if (!user) {
     return (
       <div className="text-center py-10 text-gray-400 font-inter">
@@ -78,7 +87,6 @@ const SidebarRequestLogs = () => {
   return (
     <div className="space-y-4 font-inter">
 
-      {/* select limit */}
       <div className="flex justify-between items-center">
         <select
           value={limit}
@@ -94,27 +102,22 @@ const SidebarRequestLogs = () => {
         </select>
       </div>
 
-      {/* logs list */}
       {logs.length === 0 ? (
         <p className="text-gray-400 text-center py-6">No logs found.</p>
       ) : (
         logs.map(log => (
           <div
             key={log._id}
-            className="p-3 bg-white/5 rounded border border-white/10 hover:bg-white/10 transition font-inter space-y-3"
+            className="p-3 bg-white/5 rounded border border-white/10 hover:bg-white/10 transition space-y-3 cursor-pointer"
+            onClick={() => toggleDetails(log._id)}
           >
             <div className="flex items-center space-x-2 mb-1">
-
               <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                log.method === 'GET'
-                  ? 'bg-green-500/20 text-green-400'
-                  : log.method === 'POST'
-                  ? 'bg-blue-500/20 text-blue-400'
-                  : log.method === 'PUT'
-                  ? 'bg-yellow-500/20 text-yellow-400'
-                  : log.method === 'DELETE'
-                  ? 'bg-red-500/20 text-red-400'
-                  : 'bg-purple-500/20 text-purple-400'
+                log.method === 'GET' ? 'bg-green-500/20 text-green-400'
+                : log.method === 'POST' ? 'bg-blue-500/20 text-blue-400'
+                : log.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400'
+                : log.method === 'DELETE' ? 'bg-red-500/20 text-red-400'
+                : 'bg-purple-500/20 text-purple-400'
               }`}>
                 {log.method}
               </span>
@@ -126,17 +129,61 @@ const SidebarRequestLogs = () => {
               }`}>
                 {log.statusCode}
               </span>
+
+              {log.clientIP && (
+                <span className="text-gray-400 text-xs ml-2">
+                  IP {log.clientIP}
+                </span>
+              )}
+
+              {log.responseTime && (
+                <span className="text-gray-400 text-xs">
+                  {log.responseTime} ms
+                </span>
+              )}
             </div>
 
-            <p className="text-gray-200 text-sm font-inter truncate">{log.path}</p>
-            <p className="text-gray-400 text-xs mt-1">{formatTimestamp(log.timestamp)}</p>
+            <p className="text-gray-200 text-sm truncate">{log.path}</p>
+            <p className="text-gray-400 text-xs">{formatTimestamp(log.timestamp)}</p>
+
+            {openDetails === log._id && (
+              <div className="mt-3 space-y-2 bg-black/20 p-3 rounded animate-fadeIn">
+
+                {log.requestBody && (
+                  <div>
+                    <p className="text-indigo-300 text-xs">Request body</p>
+                    <pre className="text-gray-300 text-xs bg-black/30 p-2 rounded overflow-auto">
+                      {JSON.stringify(log.requestBody, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+                {log.responseBody && (
+                  <div>
+                    <p className="text-indigo-300 text-xs">Response body</p>
+                    <pre className="text-gray-300 text-xs bg-black/30 p-2 rounded overflow-auto">
+                      {JSON.stringify(log.responseBody, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+                {log.headers && (
+                  <div>
+                    <p className="text-indigo-300 text-xs">Headers</p>
+                    <pre className="text-gray-300 text-xs bg-black/30 p-2 rounded overflow-auto">
+                      {JSON.stringify(log.headers, null, 2)}
+                    </pre>
+                  </div>
+                )}
+
+              </div>
+            )}
           </div>
         ))
       )}
 
-      {/* pagination */}
       <div className="flex justify-center items-center space-x-2 pt-3">
-        
+
         <button
           disabled={page === 1}
           onClick={() => setPage(prev => prev - 1)}
@@ -166,7 +213,6 @@ const SidebarRequestLogs = () => {
         >
           Next
         </button>
-
       </div>
     </div>
   );

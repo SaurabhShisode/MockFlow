@@ -248,28 +248,41 @@ app.delete('/mocks/:id', authMiddleware, async (req, res) => {
 
 
 app.get("/logs/paginated", authMiddleware, async (req, res) => {
-
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     const userId = req.user.uid; 
+
     const logs = await RequestLog.find({ userId })
       .sort({ timestamp: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
 
     const totalLogs = await RequestLog.countDocuments({ userId });
 
     res.json({
-      logs,
+      logs: logs.map(log => ({
+        _id: log._id,
+        timestamp: log.timestamp,
+        method: log.method,
+        path: log.path,
+        statusCode: log.statusCode,
+        responseTime: log.responseTime,
+        clientIP: log.clientIP,
+        requestBody: log.requestBody,
+        responseBody: log.responseBody,
+        headers: log.headers
+      })),
       totalPages: Math.ceil(totalLogs / limit)
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch logs" });
   }
 });
+
 app.delete("/user/delete", authMiddleware, async (req, res) => {
   try {
     const uid = req.user.uid;
