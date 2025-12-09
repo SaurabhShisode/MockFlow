@@ -39,65 +39,65 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
   const { token } = useAuth();
 
   const fetchRequests = async () => {
-  if (!token) {
-    setRequests([]);
-    setLoading(false);
-    return;
-  }
-
-  setLoading(true);
-  try {
-    const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=50`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    if (response.ok) {
-      const data = await response.json();
-      setRequests(data);
-    } else {
-      toast.error('Failed to fetch request history');
+    if (!token) {
+      setRequests([]);
+      setLoading(false);
+      return;
     }
-  } catch (error) {
-    toast.error('Error fetching request history');
-  } finally {
-    setLoading(false);
-  }
-};
+
+    setLoading(true);
+    try {
+      const response = await fetch(`https://mockflow-backend.onrender.com/mocks/${mockId}/requests?limit=10`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setRequests(data);
+      } else {
+        toast.error('Failed to fetch request history');
+      }
+    } catch (error) {
+      toast.error('Error fetching request history');
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const replayRequest = async (request: RequestLog) => {
-  setReplayingRequest(request._id);
-  try {
-    const url = `https://mockflow-backend.onrender.com${request.path}`;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...request.headers
-    };
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    setReplayingRequest(request._id);
+    try {
+      const url = `https://mockflow-backend.onrender.com${request.path}`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...request.headers
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const options: RequestInit = {
+        method: request.method,
+        headers
+      };
+
+      if (request.requestBody && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
+        options.body = JSON.stringify(request.requestBody);
+      }
+
+      const response = await fetch(url, options);
+      const responseData = await response.text();
+
+      toast.success(`Request replayed. Status: ${response.status}`);
+      console.log('Replay Response:', responseData);
+    } catch (error) {
+      toast.error('Failed to replay request');
+    } finally {
+      setReplayingRequest(null);
     }
-
-    const options: RequestInit = {
-      method: request.method,
-      headers
-    };
-
-    if (request.requestBody && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
-      options.body = JSON.stringify(request.requestBody);
-    }
-
-    const response = await fetch(url, options);
-    const responseData = await response.text();
-
-    toast.success(`Request replayed. Status: ${response.status}`);
-    console.log('Replay Response:', responseData);
-  } catch (error) {
-    toast.error('Failed to replay request');
-  } finally {
-    setReplayingRequest(null);
-  }
-};
+  };
 
 
 
@@ -122,14 +122,14 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-white">
-          {mockId ? 'Request Logs for this Mock' : 'All Request Logs'}
+      <div className="flex justify-between gap-2 md:gap-0 items-center">
+        <h3 className="text-sm md:text-lg font-semibold text-white">
+          {mockId ? 'Recent 10 Request Logs for this Mock' : 'All Request Logs'}
         </h3>
         <button
           onClick={fetchRequests}
           disabled={loading}
-          className="px-3 py-1 bg-indigo-600 text-white rounded text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+          className="px-3 py-1 bg-indigo-600 text-white rounded text-xs md:text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50 cursor-pointer"
         >
           Refresh
         </button>
@@ -151,14 +151,14 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                   <div className="flex items-center space-x-3">
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${request.method === 'GET'
-                          ? 'bg-green-500/20 text-green-400'
-                          : request.method === 'POST'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : request.method === 'PUT'
-                              ? 'bg-yellow-500/20 text-yellow-400'
-                              : request.method === 'DELETE'
-                                ? 'bg-red-500/20 text-red-400'
-                                : 'bg-purple-500/20 text-purple-400'
+                        ? 'bg-green-500/20 text-green-400'
+                        : request.method === 'POST'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : request.method === 'PUT'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : request.method === 'DELETE'
+                              ? 'bg-red-500/20 text-red-400'
+                              : 'bg-purple-500/20 text-purple-400'
                         }`}
                     >
                       {request.method}
@@ -166,23 +166,23 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
 
                     <span
                       className={`px-2 py-1 rounded text-xs ${request.statusCode >= 200 && request.statusCode < 300
-                          ? 'text-green-400'
-                          : request.statusCode >= 400 && request.statusCode < 500
-                            ? 'text-yellow-400'
-                            : 'text-red-400'
+                        ? 'text-green-400'
+                        : request.statusCode >= 400 && request.statusCode < 500
+                          ? 'text-yellow-400'
+                          : 'text-red-400'
                         }`}
                     >
                       {request.statusCode}
                     </span>
 
-                    <span className="text-gray-300 text-sm">{formatTimestamp(request.timestamp)}</span>
+                    <span className="text-gray-300 text-xs md:text-sm">{formatTimestamp(request.timestamp)}</span>
                   </div>
 
                   <button
                     onClick={() =>
                       setExpandedRequest(expandedRequest === request._id ? null : request._id)
                     }
-                    className="px-2 py-1 bg-gray-600/20 text-gray-300 rounded text-xs hover:bg-gray-600/30 transition"
+                    className="px-2 py-1 bg-gray-600/20 text-gray-300 rounded text-xs hover:bg-gray-600/30 transition cursor-pointer"
                   >
                     {expandedRequest === request._id ? 'Hide' : 'Details'}
                   </button>
@@ -193,17 +193,17 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Headers</h4>
                       <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
-  {JSON.stringify(
-  Object.fromEntries(
-    Object.entries(request.headers || {}).filter(([key]) =>
-      IMPORTANT_HEADERS.includes(key.toLowerCase())
-    )
-  ),
-  null,
-  2
-)}
+                        {JSON.stringify(
+                          Object.fromEntries(
+                            Object.entries(request.headers || {}).filter(([key]) =>
+                              IMPORTANT_HEADERS.includes(key.toLowerCase())
+                            )
+                          ),
+                          null,
+                          2
+                        )}
 
-</pre>
+                      </pre>
 
 
                     </div>
@@ -211,8 +211,8 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Request Body</h4>
                       <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
-  {JSON.stringify(request.requestBody, null, 2)}
-</pre>
+                        {JSON.stringify(request.requestBody, null, 2)}
+                      </pre>
 
 
                     </div>
@@ -220,8 +220,8 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <div>
                       <h4 className="text-sm font-medium text-white mb-2">Response Body</h4>
                       <pre className="bg-black/30 p-3 rounded text-xs text-gray-300 overflow-auto whitespace-pre-wrap break-all max-w-full max-h-48 border border-white/10">
-  {JSON.stringify(request.responseBody, null, 2)}
-</pre>
+                        {JSON.stringify(request.responseBody, null, 2)}
+                      </pre>
 
 
                     </div>
@@ -230,7 +230,7 @@ const RequestHistory = ({ mockId }: RequestHistoryProps) => {
                     <button
                       onClick={() => replayRequest(request)}
                       disabled={replayingRequest === request._id}
-                      className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition disabled:opacity-50"
+                      className="px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer"
                     >
                       Replay Request
                     </button>

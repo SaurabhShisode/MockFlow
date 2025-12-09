@@ -98,7 +98,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
 
   return (
     <div className="w-full font-inter mt-8">
-      <div className="max-w-5xl rounded-2xl items-center mx-auto bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-8 space-y-10">
+      <div className="max-w-5xl rounded-2xl items-center md:mx-auto bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-4 md:p-8 space-y-10">
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -247,7 +247,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
         <button
           onClick={handleStartMocking}
           disabled={isCreating}
-          className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 flex items-center justify-center gap-3 text-sm tracking-wide transition disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 flex items-center justify-center gap-3 text-sm tracking-wide transition disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
         >
           {isCreating ? (
             <>

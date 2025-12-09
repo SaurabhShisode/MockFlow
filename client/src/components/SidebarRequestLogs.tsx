@@ -171,12 +171,13 @@ const SidebarRequestLogs = () => {
         ))
       )}
 
-      <div className="flex justify-center items-center space-x-2 pt-3">
+      <div className="flex flex-wrap justify-center items-center gap-2 pt-3 px-2">
+
 
         <button
           disabled={page === 1}
           onClick={() => setPage(prev => prev - 1)}
-          className="px-2 py-1 bg-gray-700 text-white rounded disabled:opacity-40"
+          className="px-2 py-1 bg-gray-700 text-white rounded disabled:opacity-40 text-xs md:text-sm"
         >
           Prev
         </button>
@@ -185,7 +186,7 @@ const SidebarRequestLogs = () => {
           <button
             key={i}
             onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 rounded text-sm ${
+            className={`px-3 py-1 rounded text-xs md:text-sm ${
               page === i + 1
                 ? 'bg-indigo-600 text-white'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
@@ -198,7 +199,7 @@ const SidebarRequestLogs = () => {
         <button
           disabled={page === totalPages}
           onClick={() => setPage(prev => prev + 1)}
-          className="px-2 py-1 bg-gray-700 text-white rounded disabled:opacity-40"
+          className="px-2 py-1 bg-gray-700 text-white rounded disabled:opacity-40 text-xs md:text-sm"
         >
           Next
         </button>
