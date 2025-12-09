@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mock Placements Demo</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #111; color: #eee; }
+    h2 { color: #6ea8ff; }
+    pre { background: #222; padding: 15px; border-radius: 8px; color: #b3e5ff }
+    button { padding: 10px 15px; background: #6ea8ff; color: #000; border: none; border-radius: 6px; cursor: pointer; }
+    button:hover { opacity: .8 }
+  </style>
+</head>
+<body>
+
+  <h2>Initial Data</h2>
+  <pre id="initial"></pre>
+
+  <button id="addBtn">Add New Company</button>
+
+  <h2>Updated Data</h2>
+  <pre id="updated"></pre>
+
+  <script>
+    const url = "https://mockflow-backend.onrender.com/mock/test1";
+
+    async function loadInitial() {
+      const res = await fetch(url);
+      const data = await res.json();
+      document.getElementById("initial").textContent = JSON.stringify(data, null, 2);
+      return data;
+    }
+
+    async function addCompany() {
+      const current = await loadInitial();
+
+      const newCompany = {
+        id: "cmp_010",
+        name: "Meta",
+        logo: "https://example.com/meta.png",
+        roles: ["AR Engineer", "ML Engineer"],
+        salaryPackage: 55,
+        location: "Gurgaon"
+      };
+
+      current.push(newCompany);    
+
+      await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCompany)
+      });
+
+      const res = await fetch(url);
+      const updated = await res.json();
+      document.getElementById("updated").textContent = JSON.stringify(updated, null, 2);
+    }
+
+    document.getElementById("addBtn").onclick = addCompany;
+
+    loadInitial();
+  </script>
+
+</body>
+</html>

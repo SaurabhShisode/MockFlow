@@ -198,17 +198,6 @@ app.get('/mocks', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/requests', async (req, res) => {
-  try {
-    const logs = await RequestLog.find({})
-      .sort({ timestamp: -1 })
-      .limit(200);
-
-    res.json(logs);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch request logs' });
-  }
-});
 
 
 app.get('/mocks/:id/requests', authMiddleware, async (req, res) => {
@@ -256,40 +245,6 @@ app.delete('/mocks/:id', authMiddleware, async (req, res) => {
 });
 
 
-app.get('/test-logging/:mockId', async (req, res) => {
-  try {
-    const { mockId } = req.params;
-
-    console.log(`Testing logging for mock ${mockId}`);
-
-    const mock = await Mock.findById(mockId);
-    if (!mock) {
-      return res.status(404).json({ error: 'Mock not found' });
-    }
-
-    const logCount = await RequestLog.countDocuments({ mockId });
-    const recentLogs = await RequestLog.find({ mockId })
-      .sort({ timestamp: -1 })
-      .limit(5);
-
-    res.json({
-      mockId,
-      mockPath: mock.path,
-      mockMethod: mock.method,
-      totalLogs: logCount,
-      recentLogs: recentLogs.map(log => ({
-        id: log._id,
-        timestamp: log.timestamp,
-        method: log.method,
-        path: log.path,
-        statusCode: log.statusCode
-      }))
-    });
-  } catch (error) {
-    console.error('Error testing logging:', error);
-    res.status(500).json({ error: 'Failed to test logging' });
-  }
-});
 
 
 app.get("/logs/paginated", authMiddleware, async (req, res) => {
@@ -334,41 +289,6 @@ app.delete("/user/delete", authMiddleware, async (req, res) => {
     res.json({ success: true, message: "Account and all data deleted" });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete user account" });
-  }
-});
-
-app.get('/logs/recent', async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit) || 20;
-
-
-    const logs = await RequestLog.find({})
-      .sort({ timestamp: -1 })
-      .limit(limit)
-      .lean();
-
-
-    const mockIds = [...new Set(logs.map(log => log.mockId))];
-    const mocks = await Mock.find({ _id: { $in: mockIds } })
-      .select('_id path method')
-      .lean();
-
-    const mockMap = {};
-    mocks.forEach(m => {
-      mockMap[m._id] = m;
-    });
-
-
-    const combined = logs.map(log => ({
-      ...log,
-      mockName: mockMap[log.mockId]?.path || 'Unknown Mock',
-      mockMethod: mockMap[log.mockId]?.method || ''
-    }));
-
-    res.json(combined);
-  } catch (error) {
-    console.error('Error fetching recent logs:', error);
-    res.status(500).json({ error: 'Failed to fetch recent logs' });
   }
 });
 
