@@ -136,18 +136,14 @@ const SidebarRequestLogs = () => {
                 </span>
               )}
 
-              {log.responseTime && (
-                <span className="text-gray-400 text-xs">
-                  {log.responseTime} ms
-                </span>
-              )}
+              
             </div>
 
             <p className="text-gray-200 text-sm truncate">{log.path}</p>
             <p className="text-gray-400 text-xs">{formatTimestamp(log.timestamp)}</p>
 
             {openDetails === log._id && (
-              <div className="mt-3 space-y-2 bg-black/20 p-3 rounded animate-fadeIn">
+              <div className="mt-3 space-y-2 bg-black/20 p-3 font-inter rounded animate-fadeIn">
 
                 {log.requestBody && (
                   <div>
@@ -160,21 +156,14 @@ const SidebarRequestLogs = () => {
 
                 {log.responseBody && (
                   <div>
-                    <p className="text-indigo-300 text-xs">Response body</p>
-                    <pre className="text-gray-300 text-xs bg-black/30 p-2 rounded overflow-auto">
+                    <p className="text-indigo-300 text-xs mb-2">Response body</p>
+                    <pre className="text-gray-300 text-xs bg-black/30 p-2 rounded overflow-auto font-inter">
                       {JSON.stringify(log.responseBody, null, 2)}
                     </pre>
                   </div>
                 )}
 
-                {log.headers && (
-                  <div>
-                    <p className="text-indigo-300 text-xs">Headers</p>
-                    <pre className="text-gray-300 text-xs bg-black/30 p-2 rounded overflow-auto">
-                      {JSON.stringify(log.headers, null, 2)}
-                    </pre>
-                  </div>
-                )}
+            
 
               </div>
             )}
