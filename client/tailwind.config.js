@@ -11,10 +11,10 @@ module.exports = {
         raleway: ["Raleway", "sans-serif"],
         oswald: ["Oswald", "sans-serif"],
         poppins: ["Poppins", "sans-serif"],
-        grotesk: ["Grotesk", "sans-serif"],
+        grotesk: ["Space Grotesk", "sans-serif"],
         inter: ["Inter", "sans-serif"]
       },
     },
   },
   plugins: [],
-}
+};
