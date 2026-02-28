@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
+import SchemaBuilder from './SchemaBuilder';
 import {
   Server,
   UploadCloud,
@@ -58,6 +59,7 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
   const [isCreating, setIsCreating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
+  const [editorTab, setEditorTab] = useState<'raw' | 'builder'>('raw');
   const { token } = useAuth();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
@@ -291,39 +293,67 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
-            <FileJson className="w-4 h-4 text-indigo-400" />
-            JSON Response
-            {(() => {
-              try { JSON.parse(response); return <span className="ml-auto flex items-center gap-1 text-green-400 normal-case text-[10px]"><CheckCircle2 className="w-3 h-3" />Valid JSON</span> } catch { return <span className="ml-auto flex items-center gap-1 text-red-400 normal-case text-[10px]"><AlertCircle className="w-3 h-3" />Invalid JSON</span> }
-            })()}
-          </label>
-          <div className="rounded-2xl bg-black/30 border border-white/10 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition overflow-hidden">
-            <div className="flex">
-              <div className="json-editor-line-numbers py-4 pl-3 pr-0 bg-black/20 select-none border-r border-white/5 flex-shrink-0">
-                {response.split('\n').map((_: string, i: number) => (
-                  <span key={i} className="block text-gray-600 text-xs leading-6 text-right pr-3" style={{ minWidth: '2rem' }}>{i + 1}</span>
-                ))}
-              </div>
-              <div className="relative flex-1">
-                <pre
-                  ref={preRef}
-                  className="absolute inset-0 p-4 font-mono text-sm leading-6 overflow-hidden whitespace-pre-wrap break-words pointer-events-none"
-                  aria-hidden="true"
-                  dangerouslySetInnerHTML={{ __html: highlightJson(response) + '\n' }}
-                />
-                <textarea
-                  ref={textareaRef}
-                  className="w-full bg-transparent outline-none text-sm text-transparent caret-white p-4 font-mono resize-none h-60 leading-6 relative z-10"
-                  value={response}
-                  onChange={e => setResponse(e.target.value)}
-                  onScroll={syncScroll}
-                  disabled={isCreating}
-                  spellCheck={false}
-                />
-              </div>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
+              <FileJson className="w-4 h-4 text-indigo-400" />
+              JSON Response
+              {(() => {
+                try { JSON.parse(response); return <span className="ml-2 flex items-center gap-1 text-green-400 normal-case text-[10px]"><CheckCircle2 className="w-3 h-3" />Valid JSON</span> } catch { return <span className="ml-2 flex items-center gap-1 text-red-400 normal-case text-[10px]"><AlertCircle className="w-3 h-3" />Invalid JSON</span> }
+              })()}
+            </label>
+            <div className="flex rounded-lg bg-black/20 border border-white/10 p-0.5">
+              <button
+                type="button"
+                onClick={() => setEditorTab('raw')}
+                className={`px-3 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${editorTab === 'raw' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Raw JSON
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditorTab('builder')}
+                className={`px-3 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${editorTab === 'builder' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
+              >
+                Schema Builder
+              </button>
             </div>
           </div>
+
+          {editorTab === 'raw' ? (
+            <div className="rounded-2xl bg-black/30 border border-white/10 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition overflow-hidden">
+              <div className="flex">
+                <div className="json-editor-line-numbers py-4 pl-3 pr-0 bg-black/20 select-none border-r border-white/5 flex-shrink-0">
+                  {response.split('\n').map((_: string, i: number) => (
+                    <span key={i} className="block text-gray-600 text-xs leading-6 text-right pr-3" style={{ minWidth: '2rem' }}>{i + 1}</span>
+                  ))}
+                </div>
+                <div className="relative flex-1">
+                  <pre
+                    ref={preRef}
+                    className="absolute inset-0 p-4 font-mono text-sm leading-6 overflow-hidden whitespace-pre-wrap break-words pointer-events-none"
+                    aria-hidden="true"
+                    dangerouslySetInnerHTML={{ __html: highlightJson(response) + '\n' }}
+                  />
+                  <textarea
+                    ref={textareaRef}
+                    className="w-full bg-transparent outline-none text-sm text-transparent caret-white p-4 font-mono resize-none h-60 leading-6 relative z-10"
+                    value={response}
+                    onChange={e => setResponse(e.target.value)}
+                    onScroll={syncScroll}
+                    disabled={isCreating}
+                    spellCheck={false}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-black/30 border border-white/10 p-4">
+              <SchemaBuilder
+                initialJson={response}
+                onJsonChange={(json) => setResponse(json)}
+              />
+            </div>
+          )}
         </div>
 
         {['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) && (

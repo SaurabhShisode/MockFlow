@@ -42,6 +42,11 @@ const mockSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  collectionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Collection',
+    default: null
+  },
   userId: {
     type: String,
     required: true,

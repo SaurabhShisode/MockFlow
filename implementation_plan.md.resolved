@@ -1,0 +1,89 @@
+# Deferred Tier 3 — Implementation Plan
+
+3 remaining features. **#24 Collaboration** requires invite/auth infrastructure and is deferred further.
+
+## Proposed Changes
+
+### #20 — Collections / Folders
+
+Group mocks into named projects for better organization.
+
+#### Backend
+
+##### [NEW] [Collection.js](file:///d:/MockFlow/server/models/Collection.js)
+
+Mongoose model:
+- `name` (String, required)
+- `description` (String, optional)
+- `color` (String, hex or preset name)
+- `userId` (String, indexed)
+- `createdAt` (Date)
+
+##### [MODIFY] [Mock.js](file:///d:/MockFlow/server/models/Mock.js)
+
+Add optional `collectionId` field referencing a Collection.
+
+##### [MODIFY] [index.js](file:///d:/MockFlow/server/index.js)
+
+New endpoints:
+- `POST /collections` — create collection
+- `GET /collections` — list user's collections
+- `PUT /collections/:id` — rename/recolor
+- `DELETE /collections/:id` — delete (unlinks mocks, doesn't delete them)
+- `PUT /mocks/:id` — already exists, add `collectionId` field support
+
+#### Frontend
+
+##### [NEW] [CollectionManager.tsx](file:///d:/MockFlow/client/src/components/CollectionManager.tsx)
+
+Rendered above the mock list on Your Mocks page:
+- Horizontal scroll row of collection pills (colored dots + name)
+- "All" pill (default, shows all mocks)
+- "+ New" pill to create collection via inline input
+- Clicking a pill filters mocks by that collection
+- Right-click or "..." menu on pill → rename, change color, delete
+
+##### [MODIFY] [MockList.tsx](file:///d:/MockFlow/client/src/components/MockList.tsx)
+
+- Accept `activeCollection` filter prop
+- Filter mocks by `collectionId` when a collection is selected
+- Add collection assignment dropdown per mock card (colored dot + name)
+- PATCH mock's `collectionId` on selection
+
+##### [MODIFY] [App.tsx](file:///d:/MockFlow/client/src/App.tsx)
+
+- Render `<CollectionManager>` on Mocks page, manage `activeCollection` state
+
+---
+
+### #22 — Response Schema Builder (Simplified)
+
+Visual field builder for JSON responses — simplified version (not drag-and-drop).
+
+##### [NEW] [SchemaBuilder.tsx](file:///d:/MockFlow/client/src/components/SchemaBuilder.tsx)
+
+A tabbed alternative to the raw JSON editor on the Create Mock page:
+- Two tabs: **Raw JSON** (existing editor) | **Schema Builder** (new)
+- Schema Builder shows a list of fields with: name input, type dropdown (string/number/boolean/array/object), value input
+- "Add Field" button to add new rows
+- Auto-generates JSON from the field list and syncs to the response state
+- No backend needed — purely frontend
+
+##### [MODIFY] [MockForm.tsx](file:///d:/MockFlow/client/src/components/MockForm.tsx)
+
+- Add tab toggle between Raw JSON and Schema Builder
+- Both tabs share the same `response` state
+
+---
+
+## Deferred
+
+| # | Feature | Reason |
+|---|---------|--------|
+| 24 | Collaboration | Needs invite system, shared access control, email notifications |
+
+## Verification Plan
+
+### Browser Testing
+- **Collections**: Create a collection, assign mocks to it, filter by collection, rename, delete
+- **Schema Builder**: Switch between Raw JSON / Schema Builder tabs, add fields, verify generated JSON

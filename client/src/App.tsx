@@ -7,6 +7,7 @@ import SidebarRequestLogs from './components/SidebarRequestLogs'
 import PreferencesSection from './components/PreferencesSection'
 import CommandPalette from './components/CommandPalette'
 import MockTemplates from './components/MockTemplates'
+import CollectionManager from './components/CollectionManager'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from './context/AuthContext'
@@ -73,6 +74,8 @@ function App() {
   const [paletteOpen, setPaletteOpen] = useState(false)
   const [allMocks, setAllMocks] = useState<any[]>([])
   const [templateData, setTemplateData] = useState<any>(null)
+  const [activeCollection, setActiveCollection] = useState<string | null>(null)
+  const [collections, setCollections] = useState<any[]>([])
   const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
@@ -104,6 +107,17 @@ function App() {
       }
     }
     fetchStats()
+  }, [user, token])
+
+  useEffect(() => {
+    if (!user || !token) { setCollections([]); return }
+    const fetchCollections = async () => {
+      try {
+        const res = await fetch('https://mockflow-backend.onrender.com/collections', { headers: { Authorization: `Bearer ${token}` } })
+        if (res.ok) setCollections(await res.json())
+      } catch { /* silent */ }
+    }
+    fetchCollections()
   }, [user, token])
 
   return (
@@ -282,7 +296,16 @@ function App() {
           {activePage === 'mocks' && (
             <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
               <h1 className="text-2xl md:text-4xl font-bold md:mb-6 text-indigo-400">Your Mock Endpoints</h1>
-              <MockList ref={mockListRef} onEditMock={(mock) => { setEditingMock(mock); handlePageChange('create'); }} />
+              <CollectionManager
+                activeCollection={activeCollection}
+                onSelectCollection={setActiveCollection}
+              />
+              <MockList
+                ref={mockListRef}
+                onEditMock={(mock) => { setEditingMock(mock); handlePageChange('create'); }}
+                activeCollection={activeCollection}
+                collections={collections}
+              />
             </div>
           )}
 

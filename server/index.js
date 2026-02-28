@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
 const Mock = require('./models/Mock');
+const Collection = require('./models/Collection');
 const RequestLog = require('./models/RequestLog');
 const dynamicHandler = require('./utils/dynamicHandler');
 const authMiddleware = require('./middleware/auth');
@@ -248,7 +249,7 @@ app.delete('/mocks/:id', authMiddleware, async (req, res) => {
 app.put('/mocks/:id', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.uid;
-    const { path, method, status, response, delay, isDynamic } = req.body;
+    const { path, method, status, response, delay, isDynamic, collectionId } = req.body;
 
     const mock = await Mock.findOne({ _id: req.params.id, userId });
     if (!mock) {
@@ -264,6 +265,7 @@ app.put('/mocks/:id', authMiddleware, async (req, res) => {
     mock.response = response !== undefined ? (typeof response === 'string' ? JSON.parse(response) : response) : mock.response;
     mock.delay = delay !== undefined ? Number(delay) : mock.delay;
     mock.isDynamic = isDynamic !== undefined ? !!isDynamic : mock.isDynamic;
+    if (collectionId !== undefined) mock.collectionId = collectionId || null;
 
     await mock.save();
 
@@ -283,6 +285,61 @@ app.put('/mocks/:id', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error updating mock:', error);
     res.status(500).json({ error: 'Failed to update mock' });
+  }
+});
+
+
+app.post('/collections', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const { name, description, color } = req.body;
+    if (!name) return res.status(400).json({ error: 'Collection name is required' });
+
+    const collection = new Collection({ name: name.trim(), description: description || '', color: color || '#6366f1', userId });
+    await collection.save();
+    res.status(201).json(collection);
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ error: 'Collection with this name already exists' });
+    res.status(500).json({ error: 'Failed to create collection' });
+  }
+});
+
+app.get('/collections', authMiddleware, async (req, res) => {
+  try {
+    const collections = await Collection.find({ userId: req.user.uid }).sort({ createdAt: -1 });
+    res.json(collections);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch collections' });
+  }
+});
+
+app.put('/collections/:id', authMiddleware, async (req, res) => {
+  try {
+    const { name, description, color } = req.body;
+    const collection = await Collection.findOne({ _id: req.params.id, userId: req.user.uid });
+    if (!collection) return res.status(404).json({ error: 'Collection not found' });
+
+    if (name) collection.name = name.trim();
+    if (description !== undefined) collection.description = description;
+    if (color) collection.color = color;
+    await collection.save();
+    res.json(collection);
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ error: 'Collection with this name already exists' });
+    res.status(500).json({ error: 'Failed to update collection' });
+  }
+});
+
+app.delete('/collections/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const collection = await Collection.findOneAndDelete({ _id: req.params.id, userId });
+    if (!collection) return res.status(404).json({ error: 'Collection not found' });
+
+    await Mock.updateMany({ collectionId: req.params.id, userId }, { $set: { collectionId: null } });
+    res.json({ message: 'Collection deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete collection' });
   }
 });
 

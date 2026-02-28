@@ -12,7 +12,8 @@ import {
   ClipboardCopy,
   Download,
   Upload,
-  Terminal
+  Terminal,
+  FolderOpen
 } from 'lucide-react';
 
 interface Mock {
@@ -26,15 +27,24 @@ interface Mock {
   lastAccessed: string;
   accessCount: number;
   isDynamic?: boolean;
+  collectionId?: string | null;
 }
 
 export interface MockListRef {
   fetchMocks: () => void;
 }
 
+interface CollectionInfo {
+  _id: string;
+  name: string;
+  color: string;
+}
+
 interface MockListProps {
   onSelectMock?: (id: string | null) => void;
   onEditMock?: (mock: Mock) => void;
+  activeCollection?: string | null;
+  collections?: CollectionInfo[];
 }
 
 const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'] as const;
@@ -50,7 +60,7 @@ const methodColor = (m: string) => {
 };
 
 const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
-  const { onSelectMock, onEditMock } = props;
+  const { onSelectMock, onEditMock, activeCollection, collections } = props;
   const { token } = useAuth();
 
   const [mocks, setMocks] = useState<Mock[]>([]);
@@ -262,10 +272,25 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
     );
   }
 
+  const assignCollection = async (mockId: string, collectionId: string | null) => {
+    if (!token) return;
+    try {
+      await fetch(`https://mockflow-backend.onrender.com/mocks/${mockId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ collectionId })
+      });
+      setMocks(prev => prev.map(m => m._id === mockId ? { ...m, collectionId } : m));
+    } catch {
+      toast.error('Failed to assign collection');
+    }
+  };
+
   const filteredMocks = mocks.filter(mock => {
     const matchesSearch = searchQuery === '' || mock.path.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesMethod = activeMethodFilters.size === 0 || activeMethodFilters.has(mock.method);
-    return matchesSearch && matchesMethod;
+    const matchesCollection = !activeCollection || mock.collectionId === activeCollection;
+    return matchesSearch && matchesMethod && matchesCollection;
   });
 
   const totalPages = Math.ceil(filteredMocks.length / itemsPerPage);
@@ -333,8 +358,8 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                   key={m}
                   onClick={() => toggleMethodFilter(m)}
                   className={`px-2.5 py-1 rounded-md text-xs font-mono font-medium border transition-all cursor-pointer ${activeMethodFilters.has(m)
-                      ? methodColor(m)
-                      : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
+                    ? methodColor(m)
+                    : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10'
                     }`}
                 >
                   {m}
@@ -403,6 +428,23 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                             >
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
+                          )}
+
+                          {collections && collections.length > 0 && (
+                            <div className="relative">
+                              <select
+                                value={mock.collectionId || ''}
+                                onChange={e => assignCollection(mock._id, e.target.value || null)}
+                                className="appearance-none pl-6 pr-2 py-1 rounded-md bg-white/5 text-gray-400 border border-white/10 text-xs cursor-pointer outline-none hover:bg-white/10 transition"
+                                title="Assign to collection"
+                              >
+                                <option value="">No collection</option>
+                                {collections.map(c => (
+                                  <option key={c._id} value={c._id}>{c.name}</option>
+                                ))}
+                              </select>
+                              <FolderOpen className="absolute left-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-500 pointer-events-none" />
+                            </div>
                           )}
 
                           <button
