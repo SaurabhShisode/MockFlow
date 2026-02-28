@@ -2,6 +2,8 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
 import SchemaBuilder from './SchemaBuilder';
+import AiResponseGenerator from './AiResponseGenerator';
+import ApiPlayground from './ApiPlayground';
 import {
   Server,
   UploadCloud,
@@ -301,21 +303,24 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
                 try { JSON.parse(response); return <span className="ml-2 flex items-center gap-1 text-green-400 normal-case text-[10px]"><CheckCircle2 className="w-3 h-3" />Valid JSON</span> } catch { return <span className="ml-2 flex items-center gap-1 text-red-400 normal-case text-[10px]"><AlertCircle className="w-3 h-3" />Invalid JSON</span> }
               })()}
             </label>
-            <div className="flex rounded-lg bg-black/20 border border-white/10 p-0.5">
-              <button
-                type="button"
-                onClick={() => setEditorTab('raw')}
-                className={`px-3 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${editorTab === 'raw' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                Raw JSON
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditorTab('builder')}
-                className={`px-3 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${editorTab === 'builder' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                Schema Builder
-              </button>
+            <div className="flex items-center gap-2">
+              <AiResponseGenerator onInsert={(json) => setResponse(json)} />
+              <div className="flex rounded-lg bg-black/20 border border-white/10 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setEditorTab('raw')}
+                  className={`px-3 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${editorTab === 'raw' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  Raw JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditorTab('builder')}
+                  className={`px-3 py-1 rounded-md text-[11px] font-medium transition cursor-pointer ${editorTab === 'builder' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}
+                >
+                  Schema Builder
+                </button>
+              </div>
             </div>
           </div>
 
@@ -468,6 +473,9 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
               </button>
             </div>
           </div>
+        )}
+        {mockUrl && (
+          <ApiPlayground mockUrl={mockUrl} method={method} />
         )}
       </div>
     </div>

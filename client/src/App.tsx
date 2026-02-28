@@ -8,6 +8,8 @@ import PreferencesSection from './components/PreferencesSection'
 import CommandPalette from './components/CommandPalette'
 import MockTemplates from './components/MockTemplates'
 import CollectionManager from './components/CollectionManager'
+import MockDashboard from './components/MockDashboard'
+import ApiPlayground from './components/ApiPlayground'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from './context/AuthContext'
@@ -76,6 +78,8 @@ function App() {
   const [templateData, setTemplateData] = useState<any>(null)
   const [activeCollection, setActiveCollection] = useState<string | null>(null)
   const [collections, setCollections] = useState<any[]>([])
+  const [lastMockUrl, setLastMockUrl] = useState('')
+  const [lastMockMethod, setLastMockMethod] = useState('GET')
   const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
@@ -264,6 +268,8 @@ function App() {
                 </div>
               </div>
 
+
+              {user && <MockDashboard />}
 
             </div>
           )}
