@@ -132,6 +132,15 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
         ? `https://mockflow-backend.onrender.com/mocks/${editingMock._id}`
         : 'https://mockflow-backend.onrender.com/start-mock';
 
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(response);
+      } catch {
+        toast.error('Invalid JSON in response body');
+        setIsCreating(false);
+        return;
+      }
+
       const res = await fetch(apiUrl, {
         method: editingMock ? 'PUT' : 'POST',
         headers: {
@@ -142,7 +151,7 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
           path,
           method,
           status: Number(status),
-          response: JSON.parse(response),
+          response: parsedResponse,
           delay: Number(delay),
           isDynamic
         })
