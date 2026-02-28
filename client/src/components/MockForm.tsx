@@ -338,7 +338,7 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: Mo
               <div className="flex">
                 <div className="json-editor-line-numbers py-4 pl-3 pr-0 bg-black/20 select-none border-r border-white/5 flex-shrink-0">
                   {response.split('\n').map((_: string, i: number) => (
-                    <span key={i} className="block text-gray-600 text-xs leading-6 text-right pr-3" style={{ minWidth: '2rem' }}>{i + 1}</span>
+                    <span key={i} className="block text-gray-600 text-xs leading-6 text-right pr-3" style={{ minWidth: '2rem' }}></span>
                   ))}
                 </div>
                 <div className="relative flex-1">
