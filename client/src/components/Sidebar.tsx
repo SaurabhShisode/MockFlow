@@ -1,7 +1,7 @@
-import { Home, PlusCircle, Boxes, List, Settings, Menu, Search } from 'lucide-react';
+import { Home, PlusCircle, Boxes, List, Settings, Menu, Search, BarChart3 } from 'lucide-react';
 import { JSX, useState } from 'react';
 
-type Page = 'home' | 'create' | 'mocks' | 'logs' | 'settings';
+type Page = 'home' | 'create' | 'mocks' | 'logs' | 'analytics' | 'settings';
 
 interface SidebarProps {
   activePage: Page;
@@ -17,6 +17,7 @@ function Sidebar({ activePage, setActivePage, onOpenPalette }: SidebarProps) {
     { id: 'create', label: 'Create Mock', icon: <PlusCircle size={18} /> },
     { id: 'mocks', label: 'Your Mocks', icon: <Boxes size={18} /> },
     { id: 'logs', label: 'Request Logs', icon: <List size={18} /> },
+    { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={18} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={18} /> }
   ];
 
@@ -57,8 +58,8 @@ function Sidebar({ activePage, setActivePage, onOpenPalette }: SidebarProps) {
               key={item.id}
               onClick={() => setActivePage(item.id)}
               className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 cursor-pointer ${activePage === item.id
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                ? 'bg-indigo-600 text-white shadow'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }`}
             >
               <span className="text-indigo-300">{item.icon}</span>
@@ -118,8 +119,8 @@ function Sidebar({ activePage, setActivePage, onOpenPalette }: SidebarProps) {
                     setMobileOpen(false);
                   }}
                   className={`w-full text-sm text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${activePage === item.id
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    ? 'bg-indigo-600 text-white shadow'
+                    : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }`}
                 >
                   <span className="text-indigo-300">{item.icon}</span>

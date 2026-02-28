@@ -9,7 +9,6 @@ import CommandPalette from './components/CommandPalette'
 import MockTemplates from './components/MockTemplates'
 import CollectionManager from './components/CollectionManager'
 import MockDashboard from './components/MockDashboard'
-import ApiPlayground from './components/ApiPlayground'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from './context/AuthContext'
@@ -18,7 +17,7 @@ import { LogOut, Sparkles, BarChart3, Zap, Sun, Moon, AlertTriangle } from 'luci
 import { Layers, Activity, Settings2 } from 'lucide-react'
 import ConfirmModal from './components/ConfirmModal'
 
-type Page = 'home' | 'create' | 'mocks' | 'logs' | 'settings'
+type Page = 'home' | 'create' | 'mocks' | 'logs' | 'analytics' | 'settings'
 
 function App() {
   const [activePage, setActivePage] = useState<Page>('home')
@@ -34,7 +33,7 @@ function App() {
 
   const handlePageChange = async (page: Page) => {
     if (page !== 'create') setEditingMock(null)
-    const protectedPages: Page[] = ['create', 'mocks', 'logs', 'settings']
+    const protectedPages: Page[] = ['create', 'mocks', 'logs', 'analytics', 'settings']
     if (!user && protectedPages.includes(page)) {
       await loginWithGoogle()
       return
@@ -78,8 +77,6 @@ function App() {
   const [templateData, setTemplateData] = useState<any>(null)
   const [activeCollection, setActiveCollection] = useState<string | null>(null)
   const [collections, setCollections] = useState<any[]>([])
-  const [lastMockUrl, setLastMockUrl] = useState('')
-  const [lastMockMethod, setLastMockMethod] = useState('GET')
   const { theme, toggleTheme } = useTheme()
 
   useEffect(() => {
@@ -269,8 +266,6 @@ function App() {
               </div>
 
 
-              {user && <MockDashboard />}
-
             </div>
           )}
 
@@ -312,6 +307,13 @@ function App() {
                 activeCollection={activeCollection}
                 collections={collections}
               />
+            </div>
+          )}
+
+          {activePage === 'analytics' && (
+            <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
+              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-indigo-400">Analytics</h1>
+              <MockDashboard />
             </div>
           )}
 
