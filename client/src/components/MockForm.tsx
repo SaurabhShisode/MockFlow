@@ -28,15 +28,25 @@ interface EditingMock {
   isDynamic?: boolean;
 }
 
+interface TemplateInput {
+  path: string;
+  method: string;
+  status: number;
+  response: string;
+  delay: number;
+  isDynamic: boolean;
+}
+
 interface MockFormProps {
   onMockCreated?: () => void;
   editingMock?: EditingMock | null;
   onCancelEdit?: () => void;
+  templateData?: TemplateInput | null;
 }
 
 
 
-const MockForm = ({ onMockCreated, editingMock, onCancelEdit }: MockFormProps) => {
+const MockForm = ({ onMockCreated, editingMock, onCancelEdit, templateData }: MockFormProps) => {
   const [path, setPath] = useState('/mock/user');
   const [method, setMethod] = useState('GET');
   const [status, setStatus] = useState(200);
@@ -89,6 +99,20 @@ const MockForm = ({ onMockCreated, editingMock, onCancelEdit }: MockFormProps) =
       setShowSuccess(false);
     }
   }, [editingMock]);
+
+  useEffect(() => {
+    if (templateData) {
+      setPath(templateData.path);
+      setMethod(templateData.method);
+      setStatus(templateData.status);
+      setDelay(templateData.delay);
+      setResponse(templateData.response);
+      setIsDynamic(templateData.isDynamic);
+      setCurlCommand('');
+      setMockUrl('');
+      setShowSuccess(false);
+    }
+  }, [templateData]);
 
 
   const handleStartMocking = async () => {

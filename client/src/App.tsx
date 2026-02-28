@@ -5,10 +5,13 @@ import MockForm from './components/MockForm'
 import MockList, { MockListRef } from './components/MockList'
 import SidebarRequestLogs from './components/SidebarRequestLogs'
 import PreferencesSection from './components/PreferencesSection'
+import CommandPalette from './components/CommandPalette'
+import MockTemplates from './components/MockTemplates'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from './context/AuthContext'
-import { LogOut, Sparkles, BarChart3, Zap } from 'lucide-react'
+import { useTheme } from './context/ThemeContext'
+import { LogOut, Sparkles, BarChart3, Zap, Sun, Moon, AlertTriangle } from 'lucide-react'
 import { Layers, Activity, Settings2 } from 'lucide-react'
 import ConfirmModal from './components/ConfirmModal'
 
@@ -67,6 +70,21 @@ function App() {
   const [pageKey, setPageKey] = useState(0)
   const [overviewStats, setOverviewStats] = useState<{ mocks: number; requests: number } | null>(null)
   const [editingMock, setEditingMock] = useState<any>(null)
+  const [paletteOpen, setPaletteOpen] = useState(false)
+  const [allMocks, setAllMocks] = useState<any[]>([])
+  const [templateData, setTemplateData] = useState<any>(null)
+  const { theme, toggleTheme } = useTheme()
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setPaletteOpen(prev => !prev)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   useEffect(() => {
     setPageKey(prev => prev + 1)
@@ -80,6 +98,7 @@ function App() {
         const mocksData = mocksRes.ok ? await mocksRes.json() : []
         const totalRequests = Array.isArray(mocksData) ? mocksData.reduce((sum: number, m: any) => sum + (m.accessCount || 0), 0) : 0
         setOverviewStats({ mocks: Array.isArray(mocksData) ? mocksData.length : 0, requests: totalRequests })
+        if (Array.isArray(mocksData)) setAllMocks(mocksData)
       } catch {
         setOverviewStats(null)
       }
@@ -90,11 +109,18 @@ function App() {
   return (
     <>
       <div className="min-h-screen flex bg-gray-950 text-white">
-        <Sidebar activePage={activePage} setActivePage={handlePageChange} />
+        <Sidebar activePage={activePage} setActivePage={handlePageChange} onOpenPalette={() => setPaletteOpen(true)} />
 
         <main className="flex-1 flex flex-col p-7 md:p-10 overflow-y-auto">
 
           <div className="mb-8 flex justify-end items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors cursor-pointer"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
             {!loading && (
               <>
                 {user ? (
@@ -239,10 +265,16 @@ function App() {
                   : 'Configure your endpoint, choose a method, set a response, and start using your mock instantly.'
                 }
               </p>
+              {!editingMock && (
+                <MockTemplates onApplyTemplate={(data) => {
+                  setTemplateData(data)
+                }} />
+              )}
               <MockForm
                 onMockCreated={handleMockCreated}
                 editingMock={editingMock}
                 onCancelEdit={() => { setEditingMock(null); handlePageChange('mocks'); }}
+                templateData={templateData}
               />
             </div>
           )}
@@ -327,18 +359,21 @@ function App() {
                 </a>
               </div>
 
-              <div className="bg-red-600/10 p-4 md:p-6 rounded-xl border border-red-600/20 space-y-4">
-                <h2 className="text-lg md:text-xl font-bold text-red-400">
-                  Danger Zone
-                </h2>
+              <div className="bg-red-600/10 p-4 md:p-6 rounded-xl border-2 border-red-600/30 space-y-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                  <h2 className="text-lg md:text-xl font-bold text-red-400">
+                    Danger Zone
+                  </h2>
+                </div>
 
                 <p className="text-gray-300 text-sm md:text-base">
-                  Deleting your account will remove all your mocks and logs. This action cannot be undone.
+                  Deleting your account will permanently remove all your mocks, request logs, and data. This action is <strong className="text-red-400">irreversible</strong>.
                 </p>
 
                 <button
                   onClick={() => setShowDeleteModal(true)}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white text-sm cursor-pointer w-full md:w-fit"
+                  className="px-6 py-2.5 bg-red-600 hover:bg-red-700 rounded-lg text-white text-sm font-semibold cursor-pointer w-full md:w-fit transition-colors"
                 >
                   Delete Account
                 </button>
@@ -351,6 +386,14 @@ function App() {
           <Footer />
         </main>
       </div>
+
+      <CommandPalette
+        isOpen={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        onNavigate={(page) => handlePageChange(page as Page)}
+        onEditMock={(mock) => { setEditingMock(mock); handlePageChange('create'); }}
+        mocks={allMocks}
+      />
 
       <ConfirmModal
         {...({
