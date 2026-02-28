@@ -178,11 +178,11 @@ function App() {
 
           {activePage === 'home' && (
             <div key={pageKey} className="max-w-6xl mx-auto text-center mt-10 md:mt-28 flex-1">
-              <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-6 text-indigo-400 font-inter animate-fadeUp-1">
+              <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-6 font-inter animate-fadeUp-1 bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
                 Build, Test and Mock APIs Instantly
               </h1>
 
-              <p className="text-gray-300 text-sm md:text-lg max-w-2xl mx-auto mb-6 font-inter animate-fadeUp-2">
+              <p className="text-gray-200 text-sm md:text-lg max-w-3xl mx-auto mb-6 font-inter animate-fadeUp-2">
                 MockFlow is a powerful tool that lets you create fully functional API endpoints
                 within seconds. Speed up your frontend development by simulating backend responses
                 with zero setup.
@@ -223,18 +223,18 @@ function App() {
                 </div>
 
                 <div className="glass-card p-6 rounded-xl">
-                  <div className="mb-4 w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-indigo-400" />
+                  <div className="mb-4 w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <h3 className="md:text-xl font-semibold text-indigo-300 mb-2">Monitor Requests</h3>
+                  <h3 className="md:text-xl font-semibold text-emerald-300 mb-2">Monitor Requests</h3>
                   <p className="text-gray-400 text-sm">Track every request with timestamps, bodies, headers, and replay options.</p>
                 </div>
 
                 <div className="glass-card p-6 rounded-xl">
-                  <div className="mb-4 w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                    <Settings2 className="w-5 h-5 text-indigo-400" />
+                  <div className="mb-4 w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                    <Settings2 className="w-5 h-5 text-violet-400" />
                   </div>
-                  <h3 className="md:text-xl font-semibold text-indigo-300 mb-2">Dynamic and Static APIs</h3>
+                  <h3 className="md:text-xl font-semibold text-violet-300 mb-2">Dynamic and Static APIs</h3>
                   <p className="text-gray-400 text-sm">Support for CRUD-ready dynamic APIs and simple static mocks.</p>
                 </div>
               </div>
@@ -436,7 +436,7 @@ function App() {
         } as any)}
       />
 
-      <ToastContainer position="bottom-right" autoClose={4000} hideProgressBar={false} />
+      <ToastContainer position="bottom-right" autoClose={4000} hideProgressBar={false} theme="dark" />
     </>
   )
 }

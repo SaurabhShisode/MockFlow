@@ -58,7 +58,7 @@ function Sidebar({ activePage, setActivePage, onOpenPalette }: SidebarProps) {
               key={item.id}
               onClick={() => setActivePage(item.id)}
               className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 cursor-pointer ${activePage === item.id
-                ? 'bg-indigo-600 text-white shadow'
+                ? 'bg-indigo-600 text-white shadow border-l-[3px] border-indigo-300'
                 : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                 }`}
             >
@@ -119,7 +119,7 @@ function Sidebar({ activePage, setActivePage, onOpenPalette }: SidebarProps) {
                     setMobileOpen(false);
                   }}
                   className={`w-full text-sm text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-all duration-200 active:scale-95 ${activePage === item.id
-                    ? 'bg-indigo-600 text-white shadow'
+                    ? 'bg-indigo-600 text-white shadow border-l-[3px] border-indigo-300'
                     : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                     }`}
                 >
