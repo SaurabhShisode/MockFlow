@@ -11,7 +11,9 @@ import {
   ClipboardCopy,
   Link as LinkIcon,
   ChevronDown,
-  Check
+  Check,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 interface MockFormProps {
@@ -206,14 +208,25 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
           <label className="text-xs font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2">
             <FileJson className="w-4 h-4 text-indigo-400" />
             JSON Response
+            {(() => {
+              try { JSON.parse(response); return <span className="ml-auto flex items-center gap-1 text-green-400 normal-case text-[10px]"><CheckCircle2 className="w-3 h-3" />Valid JSON</span> } catch { return <span className="ml-auto flex items-center gap-1 text-red-400 normal-case text-[10px]"><AlertCircle className="w-3 h-3" />Invalid JSON</span> }
+            })()}
           </label>
-          <div className="rounded-2xl bg-black/30 border border-white/10 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition">
-            <textarea
-              className="w-full bg-transparent outline-none text-sm text-white p-4 font-mono resize-none h-60"
-              value={response}
-              onChange={e => setResponse(e.target.value)}
-              disabled={isCreating}
-            />
+          <div className="rounded-2xl bg-black/30 border border-white/10 focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500 transition overflow-hidden">
+            <div className="flex">
+              <div className="json-editor-line-numbers py-4 pl-3 pr-0 bg-black/20 select-none border-r border-white/5 flex-shrink-0">
+                {response.split('\n').map((_: string, i: number) => (
+                  <span key={i} className="block text-gray-600 text-xs leading-6 text-right pr-3" style={{ minWidth: '2rem' }}>{i + 1}</span>
+                ))}
+              </div>
+              <textarea
+                className="w-full bg-transparent outline-none text-sm text-white p-4 font-mono resize-none h-60 leading-6"
+                value={response}
+                onChange={e => setResponse(e.target.value)}
+                disabled={isCreating}
+                spellCheck={false}
+              />
+            </div>
           </div>
         </div>
 

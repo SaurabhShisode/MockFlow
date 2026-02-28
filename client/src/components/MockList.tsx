@@ -164,8 +164,14 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
           </div>
 
           {mocks.length === 0 ? (
-            <div className="text-center py-8">
+            <div className="text-center py-16 space-y-5">
+              <svg className="w-20 h-20 mx-auto text-gray-600" fill="none" viewBox="0 0 80 80" stroke="currentColor" strokeWidth="1.5">
+                <rect x="12" y="18" width="56" height="44" rx="6" strokeDasharray="4 3" />
+                <path d="M32 38h16M36 44h8" strokeLinecap="round" />
+                <circle cx="40" cy="30" r="4" />
+              </svg>
               <p className="text-gray-400 text-base md:text-lg">No mock endpoints created yet.</p>
+              <p className="text-gray-500 text-sm max-w-sm mx-auto">Create your first mock to start simulating API responses instantly.</p>
             </div>
           ) : (
             <>
@@ -179,10 +185,10 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                         <div className="flex flex-wrap items-center gap-2">
 
                           <span className={`px-2 py-1 rounded text-xs font-medium ${mock.method === 'GET' ? 'bg-green-500/20 text-green-400' :
-                              mock.method === 'POST' ? 'bg-blue-500/20 text-blue-400' :
-                                mock.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400' :
-                                  mock.method === 'DELETE' ? 'bg-red-500/20 text-red-400' :
-                                    'bg-purple-500/20 text-purple-400'}`}>
+                            mock.method === 'POST' ? 'bg-blue-500/20 text-blue-400' :
+                              mock.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400' :
+                                mock.method === 'DELETE' ? 'bg-red-500/20 text-red-400' :
+                                  'bg-purple-500/20 text-purple-400'}`}>
                             {mock.method}
                           </span>
 
@@ -195,10 +201,10 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                           )}
 
                           <span className={`px-2 py-1 rounded text-xs ${mock.status >= 200 && mock.status < 300
-                              ? 'bg-green-500/20 text-green-400'
-                              : mock.status >= 400 && mock.status < 500
-                                ? 'bg-yellow-500/20 text-yellow-400'
-                                : 'bg-red-500/20 text-red-400'
+                            ? 'bg-green-500/20 text-green-400'
+                            : mock.status >= 400 && mock.status < 500
+                              ? 'bg-yellow-500/20 text-yellow-400'
+                              : 'bg-red-500/20 text-red-400'
                             }`}>
                             {mock.status}
                           </span>
@@ -269,8 +275,8 @@ const MockList = forwardRef<MockListRef, MockListProps>((props, ref) => {
                     key={i}
                     onClick={() => setCurrentPage(i + 1)}
                     className={`px-3 py-1 rounded text-xs md:text-sm cursor-pointer ${currentPage === i + 1
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-700 text-gray-300'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-700 text-gray-300'
                       }`}
                   >
                     {i + 1}

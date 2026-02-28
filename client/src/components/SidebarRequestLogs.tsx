@@ -103,7 +103,14 @@ const SidebarRequestLogs = () => {
       </div>
 
       {logs.length === 0 ? (
-        <p className="text-gray-400 text-center py-6">No logs found.</p>
+        <div className="text-center py-16 space-y-5">
+          <svg className="w-20 h-20 mx-auto text-gray-600" fill="none" viewBox="0 0 80 80" stroke="currentColor" strokeWidth="1.5">
+            <path d="M20 24h40M20 34h30M20 44h35M20 54h25" strokeLinecap="round" strokeDasharray="4 3" />
+            <rect x="12" y="14" width="56" height="52" rx="6" />
+          </svg>
+          <p className="text-gray-400 text-base md:text-lg">No request logs recorded yet.</p>
+          <p className="text-gray-500 text-sm max-w-sm mx-auto">Logs will appear here once your mock endpoints receive requests.</p>
+        </div>
       ) : (
         logs.map(log => (
           <div
@@ -112,21 +119,19 @@ const SidebarRequestLogs = () => {
             onClick={() => toggleDetails(log._id)}
           >
             <div className="flex items-center space-x-2 mb-1">
-              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                log.method === 'GET' ? 'bg-green-500/20 text-green-400'
-                : log.method === 'POST' ? 'bg-blue-500/20 text-blue-400'
-                : log.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400'
-                : log.method === 'DELETE' ? 'bg-red-500/20 text-red-400'
-                : 'bg-purple-500/20 text-purple-400'
-              }`}>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${log.method === 'GET' ? 'bg-green-500/20 text-green-400'
+                  : log.method === 'POST' ? 'bg-blue-500/20 text-blue-400'
+                    : log.method === 'PUT' ? 'bg-yellow-500/20 text-yellow-400'
+                      : log.method === 'DELETE' ? 'bg-red-500/20 text-red-400'
+                        : 'bg-purple-500/20 text-purple-400'
+                }`}>
                 {log.method}
               </span>
 
-              <span className={`text-xs ${
-                log.statusCode < 300 ? 'text-green-400'
-                : log.statusCode < 500 ? 'text-yellow-400'
-                : 'text-red-400'
-              }`}>
+              <span className={`text-xs ${log.statusCode < 300 ? 'text-green-400'
+                  : log.statusCode < 500 ? 'text-yellow-400'
+                    : 'text-red-400'
+                }`}>
                 {log.statusCode}
               </span>
 
@@ -136,7 +141,7 @@ const SidebarRequestLogs = () => {
                 </span>
               )}
 
-              
+
             </div>
 
             <p className="text-gray-200 text-sm truncate">{log.path}</p>
@@ -163,7 +168,7 @@ const SidebarRequestLogs = () => {
                   </div>
                 )}
 
-            
+
 
               </div>
             )}
@@ -186,11 +191,10 @@ const SidebarRequestLogs = () => {
           <button
             key={i}
             onClick={() => setPage(i + 1)}
-            className={`px-3 py-1 rounded text-xs md:text-sm ${
-              page === i + 1
+            className={`px-3 py-1 rounded text-xs md:text-sm ${page === i + 1
                 ? 'bg-indigo-600 text-white'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+              }`}
           >
             {i + 1}
           </button>
