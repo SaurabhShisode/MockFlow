@@ -16,11 +16,11 @@ const Footer = () => {
             <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
           </a>
         </div>
-        <div className="text-center text-gray-600 text-xs">
+        <div className="text-center text-gray-500 text-xs font-grotesk tracking-wide">
           &copy; {currentYear} MockFlow. Built for the modern developer.
         </div>
-        <div className="text-center text-[11px] text-gray-700">
-          Made by <a href="https://www.linkedin.com/in/saurabh-shisode-686476248/" target="_blank" rel="noopener noreferrer" className="text-indigo-500/70 hover:text-indigo-400 hover:underline">Saurabh Shisode</a>
+        <div className="text-center text-[11px] text-gray-600">
+          Made by <a href="https://www.linkedin.com/in/saurabh-shisode-686476248/" target="_blank" rel="noopener noreferrer" className="text-indigo-500/70 hover:text-indigo-400 hover:underline transition-colors">Saurabh Shisode</a>
         </div>
       </div>
     </footer>

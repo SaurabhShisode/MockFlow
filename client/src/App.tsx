@@ -178,11 +178,11 @@ function App() {
 
           {activePage === 'home' && (
             <div key={pageKey} className="max-w-6xl mx-auto text-center mt-10 md:mt-28 flex-1">
-              <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-6 font-inter animate-fadeUp-1 bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
+              <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-6 text-white font-grotesk tracking-tight animate-fadeUp-1" style={{ textShadow: '0 0 40px rgba(99, 102, 241, 0.3)' }}>
                 Build, Test and Mock APIs Instantly
               </h1>
 
-              <p className="text-gray-200 text-sm md:text-lg max-w-3xl mx-auto mb-6 font-inter animate-fadeUp-2">
+              <p className="text-gray-300 text-sm md:text-lg max-w-3xl mx-auto mb-6 font-inter animate-fadeUp-2 leading-relaxed tracking-wide">
                 MockFlow is a powerful tool that lets you create fully functional API endpoints
                 within seconds. Speed up your frontend development by simulating backend responses
                 with zero setup.
@@ -194,7 +194,7 @@ function App() {
                   className="glow-btn cursor-pointer inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm md:text-base transition-colors"
                 >
                   <Sparkles className="w-5 h-5" />
-                  Create Your First Mock
+                  {overviewStats && overviewStats.mocks > 0 ? 'Create New Mock' : 'Create Your First Mock'}
                 </button>
               </div>
 
@@ -218,29 +218,29 @@ function App() {
                   <div className="mb-4 w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
                     <Layers className="w-5 h-5 text-indigo-400" />
                   </div>
-                  <h3 className="md:text-xl font-semibold text-indigo-300 mb-2">Create Mocks Fast</h3>
-                  <p className="text-gray-400 text-sm">Define methods, paths, responses and simulate backend behavior instantly.</p>
+                  <h3 className="md:text-xl font-semibold text-indigo-300 mb-2 font-grotesk">Create Mocks Fast</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Define methods, paths, responses and simulate backend behavior instantly.</p>
                 </div>
 
                 <div className="glass-card p-6 rounded-xl">
                   <div className="mb-4 w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                     <Activity className="w-5 h-5 text-emerald-400" />
                   </div>
-                  <h3 className="md:text-xl font-semibold text-emerald-300 mb-2">Monitor Requests</h3>
-                  <p className="text-gray-400 text-sm">Track every request with timestamps, bodies, headers, and replay options.</p>
+                  <h3 className="md:text-xl font-semibold text-emerald-300 mb-2 font-grotesk">Monitor Requests</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Track every request with timestamps, bodies, headers, and replay options.</p>
                 </div>
 
                 <div className="glass-card p-6 rounded-xl">
                   <div className="mb-4 w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
                     <Settings2 className="w-5 h-5 text-violet-400" />
                   </div>
-                  <h3 className="md:text-xl font-semibold text-violet-300 mb-2">Dynamic and Static APIs</h3>
-                  <p className="text-gray-400 text-sm">Support for CRUD-ready dynamic APIs and simple static mocks.</p>
+                  <h3 className="md:text-xl font-semibold text-violet-300 mb-2 font-grotesk">Dynamic and Static APIs</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">Support for CRUD-ready dynamic APIs and simple static mocks.</p>
                 </div>
               </div>
 
               <div className="mt-16 max-w-4xl mx-auto space-y-8 text-left animate-fadeUp-4">
-                <h2 className="text-xl md:text-3xl font-bold text-indigo-300 text-center mb-6">
+                <h2 className="text-xl md:text-3xl font-bold text-white text-center mb-8 font-grotesk tracking-tight">
                   How to Create a Mock API
                 </h2>
 
@@ -257,8 +257,8 @@ function App() {
                         {item.step}
                       </div>
                       <div>
-                        <h3 className="md:text-lg font-semibold text-indigo-300">{item.title}</h3>
-                        <p className="text-gray-400 text-sm">{item.desc}</p>
+                        <h3 className="md:text-lg font-semibold text-white font-grotesk">{item.title}</h3>
+                        <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
                       </div>
                     </div>
                   ))}
@@ -271,10 +271,10 @@ function App() {
 
           {activePage === 'create' && (
             <div key={pageKey} className="max-w-6xl md:p-8 rounded-2xl shadow-xl font-inter mx-auto animate-pageEnter flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-6 text-indigo-400 mx-auto">
+              <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-6 text-white mx-auto font-grotesk tracking-tight">
                 {editingMock ? 'Edit Mock' : 'Create a Mock API'}
               </h1>
-              <p className="text-gray-300 mb-8 text-sm">
+              <p className="text-gray-400 mb-8 text-sm tracking-wide">
                 {editingMock
                   ? 'Update your mock endpoint configuration below.'
                   : 'Configure your endpoint, choose a method, set a response, and start using your mock instantly.'
@@ -296,7 +296,7 @@ function App() {
 
           {activePage === 'mocks' && (
             <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold md:mb-6 text-indigo-400">Your Mock Endpoints</h1>
+              <h1 className="text-2xl md:text-4xl font-bold md:mb-6 text-white font-grotesk tracking-tight">Your Mock Endpoints</h1>
               <CollectionManager
                 activeCollection={activeCollection}
                 onSelectCollection={setActiveCollection}
@@ -312,14 +312,14 @@ function App() {
 
           {activePage === 'analytics' && (
             <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-indigo-400">Analytics</h1>
+              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-white font-grotesk tracking-tight">Analytics</h1>
               <MockDashboard />
             </div>
           )}
 
           {activePage === 'logs' && (
             <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-indigo-400">Request Logs</h1>
+              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-white font-grotesk tracking-tight">Request Logs</h1>
               <SidebarRequestLogs />
             </div>
           )}
@@ -327,7 +327,7 @@ function App() {
           {activePage === 'settings' && (
             <div key={pageKey} className="max-w-6xl mx-auto p-4 md:p-8 rounded-2xl shadow-xl font-inter space-y-10 animate-pageEnter flex-1">
 
-              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-indigo-400">
+              <h1 className="text-2xl md:text-4xl font-bold mb-6 text-white font-grotesk tracking-tight">
                 Settings
               </h1>
 
