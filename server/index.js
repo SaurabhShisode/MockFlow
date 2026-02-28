@@ -28,7 +28,7 @@ async function loadExistingMocks() {
     });
     console.log(`Loaded ${mocks.length} existing mocks from database`);
 
-   
+
     const dynamicMocks = mocks.filter(mock => mock.isDynamic);
     for (const mock of dynamicMocks) {
       try {
@@ -245,6 +245,48 @@ app.delete('/mocks/:id', authMiddleware, async (req, res) => {
 });
 
 
+app.put('/mocks/:id', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const { path, method, status, response, delay, isDynamic } = req.body;
+
+    const mock = await Mock.findOne({ _id: req.params.id, userId });
+    if (!mock) {
+      return res.status(404).json({ error: 'Mock not found for this user' });
+    }
+
+    const oldRouteKey = `${mock.method}:${mock.path}:${userId}`;
+    activeRoutes.delete(oldRouteKey);
+
+    mock.path = path || mock.path;
+    mock.method = method ? method.toUpperCase() : mock.method;
+    mock.status = status ? Number(status) : mock.status;
+    mock.response = response !== undefined ? (typeof response === 'string' ? JSON.parse(response) : response) : mock.response;
+    mock.delay = delay !== undefined ? Number(delay) : mock.delay;
+    mock.isDynamic = isDynamic !== undefined ? !!isDynamic : mock.isDynamic;
+
+    await mock.save();
+
+    const newRouteKey = `${mock.method}:${mock.path}:${userId}`;
+    activeRoutes.set(newRouteKey, mock);
+    registerMockRoute(mock);
+
+    if (mock.isDynamic) {
+      try {
+        await dynamicHandler.initializeData(mock.path, mock.response);
+      } catch (error) {
+        console.error('Error re-initializing dynamic data:', error);
+      }
+    }
+
+    res.json({ message: `Mock updated: ${mock.method} ${mock.path}`, mockId: mock._id });
+  } catch (error) {
+    console.error('Error updating mock:', error);
+    res.status(500).json({ error: 'Failed to update mock' });
+  }
+});
+
+
 
 
 app.get("/logs/paginated", authMiddleware, async (req, res) => {
@@ -253,7 +295,7 @@ app.get("/logs/paginated", authMiddleware, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const userId = req.user.uid; 
+    const userId = req.user.uid;
 
     const logs = await RequestLog.find({ userId })
       .sort({ timestamp: -1 })
@@ -287,13 +329,13 @@ app.delete("/user/delete", authMiddleware, async (req, res) => {
   try {
     const uid = req.user.uid;
 
-   
+
     await Mock.deleteMany({ userId: uid });
 
-   
+
     await RequestLog.deleteMany({ userId: uid });
 
-    
+
     if (global.dynamicStores && global.dynamicStores[uid]) {
       delete global.dynamicStores[uid];
     }

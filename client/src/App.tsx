@@ -8,7 +8,7 @@ import PreferencesSection from './components/PreferencesSection'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useAuth } from './context/AuthContext'
-import { LogOut, Sparkles } from 'lucide-react'
+import { LogOut, Sparkles, BarChart3, Zap } from 'lucide-react'
 import { Layers, Activity, Settings2 } from 'lucide-react'
 import ConfirmModal from './components/ConfirmModal'
 
@@ -27,6 +27,7 @@ function App() {
   }
 
   const handlePageChange = async (page: Page) => {
+    if (page !== 'create') setEditingMock(null)
     const protectedPages: Page[] = ['create', 'mocks', 'logs', 'settings']
     if (!user && protectedPages.includes(page)) {
       await loginWithGoogle()
@@ -64,10 +65,27 @@ function App() {
 
 
   const [pageKey, setPageKey] = useState(0)
+  const [overviewStats, setOverviewStats] = useState<{ mocks: number; requests: number } | null>(null)
+  const [editingMock, setEditingMock] = useState<any>(null)
 
   useEffect(() => {
     setPageKey(prev => prev + 1)
   }, [activePage])
+
+  useEffect(() => {
+    if (!user || !token) { setOverviewStats(null); return }
+    const fetchStats = async () => {
+      try {
+        const mocksRes = await fetch('https://mockflow-backend.onrender.com/mocks', { headers: { Authorization: `Bearer ${token}` } })
+        const mocksData = mocksRes.ok ? await mocksRes.json() : []
+        const totalRequests = Array.isArray(mocksData) ? mocksData.reduce((sum: number, m: any) => sum + (m.accessCount || 0), 0) : 0
+        setOverviewStats({ mocks: Array.isArray(mocksData) ? mocksData.length : 0, requests: totalRequests })
+      } catch {
+        setOverviewStats(null)
+      }
+    }
+    fetchStats()
+  }, [user, token])
 
   return (
     <>
@@ -118,7 +136,7 @@ function App() {
           </div>
 
           {activePage === 'home' && (
-            <div key={pageKey} className="max-w-4xl mx-auto text-center mt-10 md:mt-28 flex-1">
+            <div key={pageKey} className="max-w-6xl mx-auto text-center mt-10 md:mt-28 flex-1">
               <h1 className="text-3xl md:text-5xl font-bold mb-2 md:mb-6 text-indigo-400 font-inter animate-fadeUp-1">
                 Build, Test and Mock APIs Instantly
               </h1>
@@ -138,6 +156,21 @@ function App() {
                   Create Your First Mock
                 </button>
               </div>
+
+              {user && overviewStats && (
+                <div className="flex justify-center gap-4 mt-6 animate-fadeUp-2">
+                  <div className="glass-card flex items-center gap-2 px-4 py-2 rounded-full">
+                    <BarChart3 className="w-4 h-4 text-indigo-400" />
+                    <span className="text-indigo-300 font-bold text-sm">{overviewStats.mocks}</span>
+                    <span className="text-gray-400 text-xs">mocks</span>
+                  </div>
+                  <div className="glass-card flex items-center gap-2 px-4 py-2 rounded-full">
+                    <Zap className="w-4 h-4 text-indigo-400" />
+                    <span className="text-indigo-300 font-bold text-sm">{overviewStats.requests}</span>
+                    <span className="text-gray-400 text-xs">total requests</span>
+                  </div>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-3 gap-6 text-left mt-14 font-inter animate-fadeUp-3">
                 <div className="glass-card p-6 rounded-xl">
@@ -165,7 +198,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="mt-16 max-w-3xl mx-auto space-y-8 text-left animate-fadeUp-4">
+              <div className="mt-16 max-w-4xl mx-auto space-y-8 text-left animate-fadeUp-4">
                 <h2 className="text-xl md:text-3xl font-bold text-indigo-300 text-center mb-6">
                   How to Create a Mock API
                 </h2>
@@ -196,31 +229,40 @@ function App() {
           )}
 
           {activePage === 'create' && (
-            <div key={pageKey} className="max-w-5xl md:p-8 rounded-2xl shadow-xl font-inter mx-auto animate-pageEnter flex-1">
-              <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-6 text-indigo-400 mx-auto">Create a Mock API</h1>
+            <div key={pageKey} className="max-w-6xl md:p-8 rounded-2xl shadow-xl font-inter mx-auto animate-pageEnter flex-1">
+              <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-6 text-indigo-400 mx-auto">
+                {editingMock ? 'Edit Mock' : 'Create a Mock API'}
+              </h1>
               <p className="text-gray-300 mb-8 text-sm">
-                Configure your endpoint, choose a method, set a response, and start using your mock instantly.
+                {editingMock
+                  ? 'Update your mock endpoint configuration below.'
+                  : 'Configure your endpoint, choose a method, set a response, and start using your mock instantly.'
+                }
               </p>
-              <MockForm onMockCreated={handleMockCreated} />
+              <MockForm
+                onMockCreated={handleMockCreated}
+                editingMock={editingMock}
+                onCancelEdit={() => { setEditingMock(null); handlePageChange('mocks'); }}
+              />
             </div>
           )}
 
           {activePage === 'mocks' && (
-            <div key={pageKey} className="max-w-5xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
+            <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
               <h1 className="text-2xl md:text-4xl font-bold md:mb-6 text-indigo-400">Your Mock Endpoints</h1>
-              <MockList ref={mockListRef} />
+              <MockList ref={mockListRef} onEditMock={(mock) => { setEditingMock(mock); handlePageChange('create'); }} />
             </div>
           )}
 
           {activePage === 'logs' && (
-            <div key={pageKey} className="max-w-5xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
+            <div key={pageKey} className="w-full max-w-6xl mx-auto mt-14 font-inter animate-pageEnter flex-1">
               <h1 className="text-2xl md:text-4xl font-bold mb-6 text-indigo-400">Request Logs</h1>
               <SidebarRequestLogs />
             </div>
           )}
 
           {activePage === 'settings' && (
-            <div key={pageKey} className="max-w-4xl mx-auto p-4 md:p-8 rounded-2xl shadow-xl font-inter space-y-10 animate-pageEnter flex-1">
+            <div key={pageKey} className="max-w-6xl mx-auto p-4 md:p-8 rounded-2xl shadow-xl font-inter space-y-10 animate-pageEnter flex-1">
 
               <h1 className="text-2xl md:text-4xl font-bold mb-6 text-indigo-400">
                 Settings

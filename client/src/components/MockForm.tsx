@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import BouncingDotsLoader from './BouncingDotsLoader';
 import {
@@ -13,16 +13,30 @@ import {
   ChevronDown,
   Check,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Rocket
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+
+interface EditingMock {
+  _id: string;
+  path: string;
+  method: string;
+  status: number;
+  response: any;
+  delay: number;
+  isDynamic?: boolean;
+}
+
 interface MockFormProps {
   onMockCreated?: () => void;
+  editingMock?: EditingMock | null;
+  onCancelEdit?: () => void;
 }
 
 
 
-const MockForm = ({ onMockCreated }: MockFormProps) => {
+const MockForm = ({ onMockCreated, editingMock, onCancelEdit }: MockFormProps) => {
   const [path, setPath] = useState('/mock/user');
   const [method, setMethod] = useState('GET');
   const [status, setStatus] = useState(200);
@@ -32,8 +46,49 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
   const [curlCommand, setCurlCommand] = useState('');
   const [mockUrl, setMockUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
   const { token } = useAuth();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  const highlightJson = useCallback((text: string) => {
+    return text.replace(
+      /("(?:[^"\\]|\\.)*")(\s*:)?|(\b(?:true|false|null)\b)|(-?\d+\.?\d*(?:[eE][+-]?\d+)?)|([{}\[\]])|([,:])/g,
+      (match, str, colon, bool, num, brace, punct) => {
+        if (str) {
+          if (colon) return `<span class="json-key">${str}</span>${colon}`;
+          return `<span class="json-string">${str}</span>`;
+        }
+        if (bool) return `<span class="json-bool">${bool}</span>`;
+        if (num) return `<span class="json-number">${num}</span>`;
+        if (brace) return `<span class="json-brace">${brace}</span>`;
+        if (punct) return `<span class="json-punct">${punct}</span>`;
+        return match;
+      }
+    );
+  }, []);
+
+  const syncScroll = () => {
+    if (textareaRef.current && preRef.current) {
+      preRef.current.scrollTop = textareaRef.current.scrollTop;
+      preRef.current.scrollLeft = textareaRef.current.scrollLeft;
+    }
+  };
+
+  useEffect(() => {
+    if (editingMock) {
+      setPath(editingMock.path);
+      setMethod(editingMock.method);
+      setStatus(editingMock.status);
+      setDelay(editingMock.delay);
+      setResponse(JSON.stringify(editingMock.response, null, 2));
+      setIsDynamic(editingMock.isDynamic || false);
+      setCurlCommand('');
+      setMockUrl('');
+      setShowSuccess(false);
+    }
+  }, [editingMock]);
 
 
   const handleStartMocking = async () => {
@@ -45,8 +100,12 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
     setIsCreating(true);
 
     try {
-      const res = await fetch("https://mockflow-backend.onrender.com/start-mock", {
-        method: "POST",
+      const apiUrl = editingMock
+        ? `https://mockflow-backend.onrender.com/mocks/${editingMock._id}`
+        : 'https://mockflow-backend.onrender.com/start-mock';
+
+      const res = await fetch(apiUrl, {
+        method: editingMock ? 'PUT' : 'POST',
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
@@ -76,8 +135,11 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
         return;
       }
 
-      toast.success(data?.message || "Mock created successfully");
+      toast.success(data?.message || (editingMock ? 'Mock updated successfully' : 'Mock created successfully'));
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
 
+      if (editingMock && onCancelEdit) onCancelEdit();
       if (onMockCreated) onMockCreated();
     } catch (err: any) {
       toast.error(err?.message || "Failed to create mock");
@@ -100,7 +162,7 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
 
   return (
     <div className="w-full font-inter mt-8">
-      <div className="max-w-5xl rounded-2xl items-center md:mx-auto bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-4 md:p-8 space-y-10">
+      <div className="max-w-6xl rounded-2xl items-center md:mx-auto bg-white/5 border border-white/10 shadow-xl backdrop-blur-xl p-4 md:p-8 space-y-10">
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -219,13 +281,23 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
                   <span key={i} className="block text-gray-600 text-xs leading-6 text-right pr-3" style={{ minWidth: '2rem' }}>{i + 1}</span>
                 ))}
               </div>
-              <textarea
-                className="w-full bg-transparent outline-none text-sm text-white p-4 font-mono resize-none h-60 leading-6"
-                value={response}
-                onChange={e => setResponse(e.target.value)}
-                disabled={isCreating}
-                spellCheck={false}
-              />
+              <div className="relative flex-1">
+                <pre
+                  ref={preRef}
+                  className="absolute inset-0 p-4 font-mono text-sm leading-6 overflow-hidden whitespace-pre-wrap break-words pointer-events-none"
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: highlightJson(response) + '\n' }}
+                />
+                <textarea
+                  ref={textareaRef}
+                  className="w-full bg-transparent outline-none text-sm text-transparent caret-white p-4 font-mono resize-none h-60 leading-6 relative z-10"
+                  value={response}
+                  onChange={e => setResponse(e.target.value)}
+                  onScroll={syncScroll}
+                  disabled={isCreating}
+                  spellCheck={false}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -257,6 +329,16 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
         )}
 
 
+        {editingMock && onCancelEdit && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="w-full rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 text-gray-300 font-semibold py-3 flex items-center justify-center gap-2 text-sm transition cursor-pointer"
+          >
+            Cancel Editing
+          </button>
+        )}
+
         <button
           onClick={handleStartMocking}
           disabled={isCreating}
@@ -265,12 +347,27 @@ const MockForm = ({ onMockCreated }: MockFormProps) => {
           {isCreating ? (
             <>
               <BouncingDotsLoader size="sm" color="text-white" />
-              <span>Creating mock</span>
+              <span>{editingMock ? 'Updating mock' : 'Creating mock'}</span>
             </>
           ) : (
-            'Start Mock Server'
+            <>
+              <Rocket className="w-4 h-4" />
+              {editingMock ? 'Update Mock' : 'Create Mock'}
+            </>
           )}
         </button>
+
+        {showSuccess && (
+          <div className="w-full rounded-xl bg-green-500/10 border border-green-500/30 p-4 flex items-center gap-3 animate-successSlide">
+            <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center animate-successCheck">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+            </div>
+            <div>
+              <p className="text-green-300 font-semibold text-sm">Mock created successfully!</p>
+              <p className="text-green-400/70 text-xs">Your endpoint is live and ready to use.</p>
+            </div>
+          </div>
+        )}
 
         {mockUrl && (
           <div className="rounded-2xl bg-black/30 border border-white/10 p-4 space-y-2">
